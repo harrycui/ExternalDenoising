@@ -1,12 +1,12 @@
 package test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -16,80 +16,61 @@ import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
 import base.Imshow;
-import prepare.PrepareTool;
 
 public class BatchConvertGray {
 
 	public static void main(String[] args) {
-		
+
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		
-		if(args.length < 1) {
-			
-			System.out.println("Error: please provide the [imageFileListPath]");
+
+		if (args.length < 2) {
+
+			System.out.println("Error: please provide the [imagesFolderPath] [outputPath]");
 		}
+
+		String imageFolderPath = args[0];
+		String outputFolderPath = args[1];
 		
-		List<String> imagePathList = new ArrayList<String>();
+		boolean showImage = false;
 		
-		System.out.println("\nLoad image file list.");
+		if (args.length > 2) {
+			
+			if (args[2].equals("true") || args[2].equals("1")) {
+				showImage = true;
+			}
+		}
 
-        File imageFileListPath = new File(args[0]);
-        
-        BufferedReader br = null;
+		try {
+			List<Path> imagePathList = Files.walk(Paths.get(imageFolderPath)).filter(Files::isRegularFile)
+					.collect(Collectors.toList());
 
-        try {
-            System.out.print("Start reading image file list...\n");
+			System.out.println("     ---> Done\n\nLoaded " + imagePathList.size() + " images!!\n");
 
-            br = new BufferedReader(new FileReader(imageFileListPath));
+			for (int i = 0; i < imagePathList.size(); ++i) {
 
-            String tempString;
+				String tempPath = imagePathList.get(i).toString();
 
-            int limageFileNum = 0;
+				Mat testImg = Highgui.imread(tempPath);
 
-            // read until null
-            while ((tempString = br.readLine()) != null) {
+				//String filePath = tempPath.substring(0, tempPath.lastIndexOf("/") + 1);
 
-            	imagePathList.add(tempString.replace("\n", ""));
+				String fileName = tempPath.substring(tempPath.lastIndexOf("/") + 1);
 
-                ++limageFileNum;
-            }
+				if (showImage) {
+					Imshow im1 = new Imshow("Show the image");
+					im1.showImage(testImg);
+				}
+				
+				SoftReference<Mat> mGrayMat = new SoftReference<Mat>(
+						new Mat(testImg.rows(), testImg.cols(), CvType.CV_8UC1, new Scalar(0)));
 
-            br.close();
+				Imgproc.cvtColor(testImg, mGrayMat.get(), Imgproc.COLOR_RGBA2GRAY);
 
-            System.out.println("     ---> Done\n\nLoaded " + limageFileNum + " images!!\n");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
-        
-        
-        
-        for(int i = 0; i < imagePathList.size(); ++i) {
-        	
-        	String tempPath = imagePathList.get(i);
-        	
-        	Mat testImg = Highgui.imread(tempPath);
-        	
-        	String filePath = tempPath.substring(0, tempPath.lastIndexOf("/")+1);
-        	
-        	String fileName = tempPath.substring(tempPath.lastIndexOf("/")+1);;
-    		
-    		Imshow im1 = new Imshow("Show the image");
-    		im1.showImage(testImg);
-    		
-    		SoftReference<Mat> mGrayMat = new SoftReference<Mat>(new Mat(testImg.rows(), testImg.cols(), CvType.CV_8UC1, new Scalar(0)));
-
-    		Imgproc.cvtColor(testImg, mGrayMat.get(), Imgproc.COLOR_RGBA2GRAY);
-    		
-    		Highgui.imwrite(filePath + "gray/gray-" + fileName, mGrayMat.get());
-        }
+				Highgui.imwrite(outputFolderPath + fileName, mGrayMat.get());
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

@@ -11,7 +11,7 @@ import org.opencv.highgui.Highgui;
 
 public class PrepareTool {
 
-	public static int extPatch(Mat image, int step, int overlap, int startId, String filePath, String fileName) {
+	public static int extPatch(Mat image, int step, int overlap, String imageName, int startId, String filePath, String fileName) {
 				
 		assert(image.type() == CvType.CV_8UC1);
 		
@@ -46,10 +46,10 @@ public class PrepareTool {
 					/*Imshow im1 = new Imshow("Show the image");
 					im1.showImage(imageROI);*/
 					
-					Highgui.imwrite(filePath + "rawPatch/" + startId + ".png", imageROI);
+					Highgui.imwrite(filePath + "rawPatch/" + imageName + "-" + startId + ".png", imageROI);
 					
 					//System.out.println(readPatch(imageROI, startId++));
-					writer.write(readPatch(imageROI, startId) + "\n");
+					writer.write(readPatch(imageName, imageROI, startId) + "\n");
 					
 					System.out.println("Id : " + startId++ + " has been stored.");
 				}
@@ -57,6 +57,8 @@ public class PrepareTool {
 
 			writer.flush();
 			writer.close();
+			
+			System.out.println("Done!");
 
 		} catch (IOException e) {
 
@@ -75,11 +77,11 @@ public class PrepareTool {
 		return startId;
 	}
 	
-	public static String readPatch(Mat patch, int id) {
+	public static String readPatch(String imageName, Mat patch, int id) {
 		
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append(id + ":");
+		sb.append(imageName + "-" + id + ":");
 		
 		for(int y = 0; y < patch.rows(); ++y) {
 			for(int x = 0; x < patch.cols(); ++x) {

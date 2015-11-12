@@ -1,19 +1,15 @@
 package test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
 import org.opencv.highgui.Highgui;
-import org.opencv.imgproc.Imgproc;
 
 import base.Imshow;
 import prepare.PrepareTool;
@@ -21,77 +17,70 @@ import prepare.PrepareTool;
 public class BatchExtPatch {
 
 	public static void main(String[] args) {
-		
+
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		
-		if(args.length < 3) {
-			
-			System.out.println("Error: please provide the [imageFileListPath] [step] [overlap]");
+
+		if (args.length < 4) {
+
+			System.out.println("Error: please provide the [imagesFolderPath] [outputPath] [step] [overlap]");
 		}
-		
-		List<String> imagePathList = new ArrayList<String>();
-		
+
 		System.out.println("\nLoad image file list.");
 
-        File imageFileListPath = new File(args[0]);
-        
-        int step = Integer.parseInt(args[1]);
-        
-        int overlap = Integer.parseInt(args[2]);
-        
-        BufferedReader br = null;
+		String imagesFolderPath = args[0];
 
-        try {
-            System.out.print("Start reading image file list...\n");
+		String outputPath = args[1];
 
-            br = new BufferedReader(new FileReader(imageFileListPath));
+		int step = Integer.parseInt(args[2]);
 
-            String tempString;
+		int overlap = Integer.parseInt(args[3]);
+		
+		boolean showImage = false;
+		
+		if (args.length > 4) {
+			
+			if (args[4].equals("true") || args[4].equals("1")) {
+				showImage = true;
+			}
+		}
 
-            int limageFileNum = 0;
+		System.out.print("Start reading image file list...\n");
 
-            // read until null
-            while ((tempString = br.readLine()) != null) {
+		try {
+			List<Path> imagePathList = Files.walk(Paths.get(imagesFolderPath)).filter(Files::isRegularFile)
+					.collect(Collectors.toList());
 
-            	imagePathList.add(tempString.replace("\n", ""));
+			System.out.println("     ---> Done\n\nLoaded " + imagePathList.size() + " images!!\n");
 
-                ++limageFileNum;
-            }
+			int startId = 1;
 
-            br.close();
+			for (int i = 0; i < imagePathList.size(); ++i) {
 
-            System.out.println("     ---> Done\n\nLoaded " + limageFileNum + " images!!\n");
+				String tempPath = imagePathList.get(i).toString();
+				
+				String fileName = tempPath.substring(tempPath.lastIndexOf("/") + 1);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
-        
-        int startId = 1;
-        
-        for(int i = 0; i < imagePathList.size(); ++i) {
-        	
-        	String tempPath = imagePathList.get(i);
-        	
-        	String filePath = tempPath.substring(0, tempPath.lastIndexOf("/")+1);
-        	
-        	Mat testImg = Highgui.imread(tempPath);
-    		
-    		Imshow im1 = new Imshow("Show the image");
-    		im1.showImage(testImg);
-    		
-    		/*SoftReference<Mat> mGrayMat = new SoftReference<Mat>(new Mat(testImg.rows(), testImg.cols(), CvType.CV_8UC1, new Scalar(0)));
+				Mat testImg = Highgui.imread(tempPath);
 
-    		Imgproc.cvtColor(testImg, mGrayMat.get(), Imgproc.COLOR_RGBA2GRAY);*/
-    		
-    		startId = PrepareTool.extPatch(testImg, step, overlap, startId, filePath, "patch.txt");
-        }
+				if (showImage) {
+					Imshow im1 = new Imshow("Show the image");
+					im1.showImage(testImg);
+				}
+
+				/*
+				 * SoftReference<Mat> mGrayMat = new SoftReference<Mat>(new
+				 * Mat(testImg.rows(), testImg.cols(), CvType.CV_8UC1, new
+				 * Scalar(0)));
+				 * 
+				 * Imgproc.cvtColor(testImg, mGrayMat.get(),
+				 * Imgproc.COLOR_RGBA2GRAY);
+				 */
+
+				startId = PrepareTool.extPatch(testImg, step, overlap, fileName, startId, outputPath, "patch.txt");
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

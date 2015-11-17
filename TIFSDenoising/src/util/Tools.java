@@ -10,12 +10,8 @@ import java.util.Map;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.highgui.Highgui;
 
-import base.Image;
-import base.Imshow;
+import base.ImageInPatch;
 import base.Patch;
 import base.Pixel;
 import base.RecoverImage;
@@ -85,70 +81,51 @@ public class Tools {
 		return patches;
 	}
 
-	public static List<Image> readImages(String inputPath, int numOfImage, int numOfPatchesInOneImage) {
+	public static ImageInPatch readOneImageInPatches(String inputPath) {
 
 		BufferedReader reader = null;
 
-		List<Image> imageList = new ArrayList<Image>();
+		ImageInPatch imageInPatch = null;
 
 		try {
 
 			reader = new BufferedReader(new FileReader(inputPath));
 
-			String tempStr = null;
+			List<Patch> patchList = new ArrayList<Patch>();
 
-			int pid;
+			int lineNumber = 0;
 
-			int iid;
+			String tempString = null;
 
-			for (int ctr = 0; ctr < numOfImage; ++ctr) {
+			while ((tempString = reader.readLine()) != null) {
 
-				iid = ctr;
+				++lineNumber;
 
-				String imageName = null;
+				String[] subStrs = tempString.split(": ");
 
-				List<Patch> patchList = new ArrayList<Patch>();
+				String[] nameStr = subStrs[0].split("-");
 
-				for (int j = 0; j < numOfPatchesInOneImage; ++j) {
+				int pid = Integer.parseInt(nameStr[1]);
 
-					tempStr = reader.readLine();
+				String[] pixelStr = subStrs[1].split(" ");
 
-					// TODO: hardcode the format ": "
+				int dim = pixelStr.length;
 
-					String[] dataStr = tempStr.split(": ");
+				int[] pixels = new int[dim];
 
-					String[] metaData = dataStr[0].split("-");
+				for (int i = 0; i < dim; ++i) {
 
-					imageName = metaData[0];
-
-					String pidStr = metaData[1];
-
-					pid = Integer.parseInt(pidStr);
-
-					String[] pixelStr = dataStr[1].split(" ");
-
-					int dim = pixelStr.length;
-
-					int[] pixels = new int[dim];
-
-					for (int t = 0; t < dim; ++t) {
-
-						pixels[t] = (Integer.parseInt(pixelStr[t]));
-					}
-
-					Patch onePatch = new Patch(pid, dim, pixels);
-
-					patchList.add(onePatch);
-
+					pixels[i] = (Integer.parseInt(pixelStr[i]));
 				}
 
-				Image oneImage = new Image(imageName, iid, patchList);
+				Patch onePatch = new Patch(pid, dim, pixels);
 
-				imageList.add(oneImage);
-
+				patchList.add(onePatch);
 			}
 
-			System.out.println("Read image patches sucessfully!");
+			imageInPatch = new ImageInPatch("", 1, patchList);
+
+			System.out.println("Read query image patches sucessfully! Number of patches: " + lineNumber);
 
 		} catch (IOException e) {
 
@@ -167,8 +144,7 @@ public class Tools {
 			}
 		}
 
-		return imageList;
-
+		return imageInPatch;
 	}
 
 	/**
@@ -216,14 +192,14 @@ public class Tools {
 
 	}
 
-	public static void recoverImageFromPatches(String outputPath, RecoverImage ri, int threshold, int sigma) {
+	public static Mat recoverImageFromPatches(RecoverImage ri, int step, int threshold, int sigma, double k) {
 
 		// TODO: recover image
 		List<Patch> finalPatches = new ArrayList<Patch>(ri.getNumOfPatches());
 
 		for (SimilarPatches sp : ri.getPatches()) {
 
-			Patch fp = Tools.nlmDenoise(sp.getQueryPatch(), sp.getPatches(), threshold, sigma);
+			Patch fp = Tools.nlmDenoise(sp.getQueryPatch(), sp.getPatches(), step, threshold, sigma, k);
 
 			finalPatches.add(fp);
 		}
@@ -237,7 +213,7 @@ public class Tools {
 		for (Patch p : finalPatches) {
 
 			Pixel firstPixel = Tools.computeLocation(pid, ri.getPatchWidth(), ri.getStep(), ri.getOverlap());
-			
+
 			for (int innerY = 0; innerY < ri.getStep(); ++innerY) {
 				for (int innerX = 0; innerX < ri.getStep(); ++innerX) {
 
@@ -247,132 +223,171 @@ public class Tools {
 					counter[y][x] += 1;
 				}
 			}
-			
+
 			pid++;
 		}
-		
-		assert(x == ri.getWidth() - 1 && y == ri.getHeight() - 1);
-		
+
+		assert (x == ri.getWidth() - 1 && y == ri.getHeight() - 1);
+
 		System.out.println("heiht: " + ri.getHeight() + ", widht : " + ri.getWidth());
-		
-		Mat riMat = new Mat(ri.getHeight(), ri.getWidth(), CvType.CV_8UC1);
-		
+
+		Mat newImageMat = new Mat(ri.getHeight(), ri.getWidth(), CvType.CV_8UC1);
+
 		for (int i = 0; i < ri.getHeight(); i++) {
 			for (int j = 0; j < ri.getWidth(); j++) {
 				ri.pixels[i][j] /= counter[i][j];
-				riMat.put(i, j, ri.pixels[i][j]);
+				newImageMat.put(i, j, ri.pixels[i][j]);
 			}
 		}
-		
-		Imshow im1 = new Imshow("Show the image");
-		im1.showImage(riMat);
-		
-		Highgui.imwrite(outputPath + ri.getName(), riMat);
+
+		return newImageMat;
 	}
-	
-	
+
 	private static Pixel computeLocation(int pid, int patchWidth, int step, int overlap) {
-		
+
 		int patchX = pid % patchWidth;
 		int patchY = pid / patchWidth;
-		
+
 		int x = patchX * (step - overlap);
 		int y = patchY * (step - overlap);
-		
+
 		return new Pixel(x, y);
 	}
 
-	private static Patch nlmDenoise(Patch queryPatch, List<Patch> similarPatches, int threshold, int sigma) {
+	private static Patch nlmDenoise(Patch queryPatch, List<Patch> similarPatches, int step, int threshold, int sigma, double k) {
 
-		List <Integer> indList = new ArrayList<Integer>();
-		  
-		  List <Double> weightList = new ArrayList<Double>();
-		   
-		  double h=2*sigma*sigma;
-		  
-		  double weightSum=0;
-		  
-		  // 1. Compute distances
-		  
-		  for (int i=0; i < similarPatches.size(); i++){
-		   
-		   double tempDist = computeEuclideanDist(queryPatch.getPixels(), similarPatches.get(i).getPixels());
-		   
-		   if(!(tempDist >threshold)){
-		    
-		    double weight =  Math.exp(-(tempDist/h));
-		    
-		    weightSum += weight;
-		    
-		    weightList.add(weight);
-		    
-		    indList.add(i);
-		      
-		   }
-		      
-		  }
-		  
-		  List <double[]> weightedPixelsList = new ArrayList<double []>();
-		  
-		  for (int j = 0; j < weightList.size(); j++){
-		   
-		   double tempWeight = weightList.get(j)/weightSum;
-		   
-		   double[] tempWeightedPixels = new double[64]; 
-		   
-		   for (int k = 0; k < 64; k++){
-		    
-		    tempWeightedPixels[k] = tempWeight * (similarPatches.get(indList.get(j)).getPixels()[k]); 
-		    
-		   }
-		   
-		   weightedPixelsList.add(tempWeightedPixels);
-		   
-		  }
-		  
-		  int[] pixels = new int[64];  
-		   
-		  for (int l = 0; l < 64; l++){
-		   
-		   for(int t = 0; t< weightedPixelsList.size(); t++){
-		    
-		    pixels[l] += (int) Math.floor(weightedPixelsList.get(t)[l]); 
-		       
-		   }
-		   
-		  }
-		  
-		  int pid = queryPatch.getPid();
-		  
-		  Patch denoisedPatch = new Patch(pid, 64, pixels);
-		  
-		  return denoisedPatch;
+		List<Integer> indList = new ArrayList<Integer>();
+
+		List<Double> weightList = new ArrayList<Double>();
+		
+		//double k = 0.35;
+
+		double h = k * k * sigma * sigma;
+
+		double weightSum = 0;
+
+		// 1. Compute distances
+
+		for (int i = 0; i < similarPatches.size(); i++) {
+
+			double tempDist = computeEuclideanDist(queryPatch.getPixels(), similarPatches.get(i).getPixels());
+
+			if (!(tempDist > threshold)) {
+
+				double weight = Math.exp(-(tempDist / h));
+
+				weightSum += weight;
+
+				weightList.add(weight);
+
+				indList.add(i);
+
+			}
+
+		}
+
+		List<double[]> weightedPixelsList = new ArrayList<double[]>();
+
+		for (int j = 0; j < weightList.size(); j++) {
+
+			double tempWeight = weightList.get(j) / weightSum;
+
+			double[] tempWeightedPixels = new double[step * step];
+
+			for (int l = 0; l < step * step; l++) {
+
+				tempWeightedPixels[l] = tempWeight * (similarPatches.get(indList.get(j)).getPixels()[l]);
+
+			}
+
+			weightedPixelsList.add(tempWeightedPixels);
+
+		}
+
+		int[] pixels = new int[step * step];
+
+		for (int l = 0; l < step * step; l++) {
+
+			for (int t = 0; t < weightedPixelsList.size(); t++) {
+
+				pixels[l] += (int) Math.floor(weightedPixelsList.get(t)[l]);
+
+			}
+
+		}
+
+		int pid = queryPatch.getPid();
+
+		Patch denoisedPatch = new Patch(pid, step * step, pixels);
+
+		return denoisedPatch;
+	}
+
+	public static double psnr(int[][] ori, int[][] dst) {
+
+		double psnr = 0.0;
+
+		double mse = 0.0;
+
+		double maxValue = 255;
+
+		int height = ori.length;
+
+		int width = ori[0].length;
+
+		for (int i = 0; i < height; i++) {
+
+			for (int j = 0; j < width; j++) {
+
+				mse += (ori[i][j] - dst[i][j]) * (ori[i][j] - dst[i][j]) / (height * width);
+
+			}
+
+		}
+
+		psnr = 20 * (Math.log10(maxValue / (Math.sqrt(mse))));
+
+		return psnr;
 	}
 	
-	public static double psnr(int[][] ori, int[][] dst) {
-	    
-	    double psnr = 0.0;
-	    
-	    double mse =0.0;
-	    
-	    double maxValue = 255;
-	    
-	    int height = ori.length;
-	    
-	    int width = ori[0].length;
-	    
-	    for (int i = 0; i < height; i++){
-	     
-	     for (int j = 0; j< width; j++){
-	      
-	      mse += (ori[i][j]-dst[i][j])*(ori[i][j]-dst[i][j])/(height*width);
-	      
-	     }
-	     
-	    }
-	    
-	    psnr = 20*(Math.log10(maxValue/(Math.sqrt(mse))));
-	     
-	    return psnr;
-	 }
+	public static double psnr(Mat ori, Mat dst) {
+		
+		assert(ori.type() == dst.type() && ori.cols() == dst.cols() && ori.rows() == dst.rows());
+
+		double psnr = 0.0;
+
+		double mse = 0.0;
+
+		double maxValue = 255;
+
+		int height = ori.rows();
+
+		int width = ori.cols();
+
+		for (int i = 0; i < height; i++) {
+
+			for (int j = 0; j < width; j++) {
+
+				mse += (ori.get(i, j)[0] - dst.get(i, j)[0]) * (ori.get(i, j)[0] - dst.get(i, j)[0]) / (height * width);
+
+			}
+
+		}
+
+		psnr = 20 * (Math.log10(maxValue / (Math.sqrt(mse))));
+
+		return psnr;
+	}
+	
+	public static int computeFitNumber(int length, int step, int overlap) {
+		
+		return (int) Math.ceil((double) (length - overlap) / (double) (step - overlap));
+	}
+	
+	public static int computeFitSize(int length, int step, int overlap) {
+		
+		int fitNum = Tools.computeFitNumber(length, step, overlap);
+		
+		return fitNum * (step - overlap) + overlap;
+	}
 }

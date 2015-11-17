@@ -2,7 +2,7 @@ package base;
 
 import java.util.List;
 
-public class Image {
+public class ImageInPatch {
 		
 	private String name;
 	
@@ -10,7 +10,7 @@ public class Image {
 	
 	private List<Patch> patches;
 	
-	public Image(String name, int iid, List<Patch> patches) {
+	public ImageInPatch(String name, int iid, List<Patch> patches) {
 		
 		this.name = name;
 		

@@ -22,7 +22,7 @@ public class RecoverImage {
 	
 	public int[][] pixels;
 
-	public RecoverImage(String name, int numOfPatches, int height, int width, int step, int overlap, int patchWidth, List<SimilarPatches> patches) {
+	public RecoverImage(String name, int numOfPatches, int height, int width, int patchWidth, int step, int overlap, List<SimilarPatches> patches) {
 		super();
 		this.name = name;
 		this.numOfPatches = numOfPatches;

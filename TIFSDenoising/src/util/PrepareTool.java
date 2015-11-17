@@ -4,26 +4,25 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.Size;
-import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 
 public class PrepareTool {
 
-	public static int extPatch(Mat image, int step, int overlap, String imageName, int startId, String filePath,
-			String fileName) {
+	public static int extPatch(Mat image, int step, int overlap, String imageName, int startId, String filePath) {
 
 		assert (image.type() == CvType.CV_8UC1);
 		
 		// this function is used to resize the image to be suitable for cutting
 		image = resizeImage4Suitable(image, step, overlap);
 
-		String rawDataFileName = filePath + fileName;
+		//String rawDataFileName = filePath + fileName;
 
-		File file = new File(rawDataFileName);
+		File file = new File(filePath);
 		if (!file.getParentFile().exists()) {
 			file.getParentFile().mkdirs();
 		}
@@ -32,7 +31,7 @@ public class PrepareTool {
 
 		try {
 
-			writer = new BufferedWriter(new FileWriter(rawDataFileName, true));
+			writer = new BufferedWriter(new FileWriter(filePath, true));
 
 			int width = image.cols();
 			int height = image.rows();
@@ -49,12 +48,8 @@ public class PrepareTool {
 
 					Mat imageROI = image.submat(roi);
 
-					/*
-					 * Imshow im1 = new Imshow("Show the image");
-					 * im1.showImage(imageROI);
-					 */
 
-					Highgui.imwrite(filePath + "rawPatch/" + imageName + "-" + startId + ".png", imageROI);
+					//Highgui.imwrite(filePath + "rawPatch/" + imageName + "-" + startId + ".png", imageROI);
 
 					// System.out.println(readPatch(imageROI, startId++));
 					writer.write(readPatch(imageName, imageROI, startId) + "\n");

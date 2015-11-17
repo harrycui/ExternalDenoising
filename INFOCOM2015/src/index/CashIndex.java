@@ -1,13 +1,13 @@
 package index;
 
 import tool.PRF;
-
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import base.CashDigest;
 import base.LSHVector;
 import thread.MyCountDown;
-import thread.TMCQueryThreadV3;
+import thread.OnePatchQueryThread;
 
 /**
  *
@@ -17,32 +17,28 @@ public class CashIndex {
 
     private int L;
 
-    public static HashMap<Long, Integer> rawIndex;
+    public static HashMap<Long, Integer> staticIndex;
 
     public static HashMap<Long, Integer> dynamicIndex;
 
     public static HashSet<Long> revidSet;
 
-    public static HashMap<Integer, Integer> featureRank;
-
-    public static int[] featureRankArray;
-
     private HashMap<Long, Long> maxC; // used to record the maximum c for each lsh tag;
 
     public static HashMap<Integer, String> idMap;
-
-    public static HashMap<String, Integer> searchResult;
+    
+    public static ConcurrentHashMap<Integer, Integer> tempPatchResult;
 
     public CashIndex(int limit, int L) {
 
         this.L = L;
         this.maxC = new HashMap<Long, Long>();
-        this.idMap = new HashMap<Integer, String>(limit);
+        
+        CashIndex.idMap = new HashMap<Integer, String>(limit);
 
-        CashIndex.rawIndex = new HashMap<Long, Integer>(limit);
+        CashIndex.staticIndex = new HashMap<Long, Integer>(limit);
         CashIndex.dynamicIndex = new HashMap<Long, Integer>(limit);
         CashIndex.revidSet = new HashSet<Long>();
-        CashIndex.searchResult = new HashMap<String, Integer>();
     }
 
     public void insert(LSHVector lshVector, String imageId, int fid, String keyV, String keyR) {
@@ -75,9 +71,9 @@ public class CashIndex {
                 //long tag = Long.parseLong(c + "0000" + lshValue + "0" + i);
 
                 // if does not exist, directly insert
-                if (!rawIndex.containsKey(a)) {
+                if (!staticIndex.containsKey(a)) {
                     //System.out.println(a);
-                    rawIndex.put(a, fid);
+                		staticIndex.put(a, fid);
 
                     idMap.put(fid, imageId);
 
@@ -110,549 +106,55 @@ public class CashIndex {
         revidSet.add(revid);
     }
 
-    public HashMap<String, Integer> search(List<LSHVector> query, String keyV, String keyR) {
+	public HashMap<Integer, Integer> searchByOnePatch(LSHVector lshVector, String keyV, String keyR) {
 
-        // Step 1: generate digests on client
+		// Step 1: generate digests on client
+		long timeFlag1 = System.currentTimeMillis();
 
-        long timeFlag1 = System.currentTimeMillis();
+		List<CashDigest> digestInL = new ArrayList<CashDigest>(L);
 
-        List<List<CashDigest>> digests = new ArrayList<List<CashDigest>>(query.size());
+		for (int i = 0; i < lshVector.getDimension(); ++i) {
 
-        for (LSHVector lshVector : query) {
+			digestInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
+		}
 
-            List<CashDigest> digestsInL = new ArrayList<CashDigest>(L);
+		System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
 
-            for (int i = 0; i < lshVector.getDimension(); ++i) {
+		// Step 2: search on server side
+		long timeFlag2 = System.currentTimeMillis();
 
-                digestsInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
-            }
+		// <patch id, number of occurrence>
+		HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
 
-            digests.add(digestsInL);
-        }
+        // <pid, counter>
+     	tempPatchResult = new ConcurrentHashMap<Integer, Integer>();
 
-        System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
+		// long timeFlag0 = System.currentTimeMillis();
 
-        // Step 2: search on server side
+		MyCountDown threadCounter = new MyCountDown(L);
 
-        long timeFlag2 = System.currentTimeMillis();
+		for (int i = 0; i < L; i++) {
 
-        HashMap<String, Integer> result = new HashMap<String, Integer>();
+			OnePatchQueryThread t = new OnePatchQueryThread("Thread " + i, threadCounter, i, digestInL);
 
-        for (List<CashDigest> digestInL : digests) {
+			t.start();
+		}
 
-            // Step 1: for each LSH query vector, get the nearest features
+		// wait for all threads done
+		while (true) {
+			if (!threadCounter.hasNext())
+				break;
+		}
+		
+		result.putAll(tempPatchResult);
 
+		tempPatchResult.clear();
+		tempPatchResult = null;
 
-            // <fid, counter>
-            //ConcurrentHashMap<Integer, Integer> featureRank = new ConcurrentHashMap<Integer, Integer>();
-            featureRank = new HashMap<Integer, Integer>();
+		System.out.println("Query patch at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
 
-            //long timeFlag0 = System.currentTimeMillis();
-
-
-            MyCountDown threadCounter = new MyCountDown(L);
-
-            for (int i = 0; i < L; i++) {
-
-                TMCQueryThread t = new TMCQueryThread("Thread " + i, threadCounter, i, digestInL);
-
-                t.start();
-            }
-
-            // wait for all threads done
-            while (true) {
-                if (!threadCounter.hasNext())
-                    break;
-            }
-
-            //System.out.println("Query feature cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
-
-            /*
-            for (int i = 0; i < L; ++i) {
-
-                long k1 = digestInL.get(i).getK1();
-                //long k2
-
-                long c = 1; // start from 1
-
-                while (true) {
-
-                    long a = serverPosition(k1, c);
-
-                    // if does not exist, directly insert
-                    if (rawIndex.containsKey(a)) {
-
-                        //long timeFlag01 = System.currentTimeMillis();
-
-                        int fid = rawIndex.get(a);
-
-                        CashIndex3.featureRankArray[fid] = CashIndex3.featureRankArray[fid] + 1;
-                    } else {
-                        break;
-                    }
-
-                    ++c;
-                }
-            }*/
-
-            //long timeFlagArray = System.currentTimeMillis();
-            for (int i = 1; i < CashIndex.featureRankArray.length; ++i) {
-
-                if (CashIndex.featureRankArray[i] >= 2) {
-                    featureRank.put(i, CashIndex.featureRankArray[i]);
-                }
-                CashIndex.featureRankArray[i] = 0;
-            }
-            //System.out.println("Filter feature cost: " + (System.currentTimeMillis() - timeFlagArray) + "ms");
-
-            //long timeFlagRank = System.currentTimeMillis();
-
-            // Step 2: rank this feature set
-            if (featureRank.size() > 0) {
-
-                //long timeFlag3 = System.currentTimeMillis();
-
-                List<Integer> fids = rankFeature(2, featureRank);
-
-                //System.out.println("Rank feature cost: " + (System.currentTimeMillis() - timeFlag3) + "ms");
-
-                if (fids.size() > 0) {
-                    //System.out.println("For query feature id = " + queryFid + ":");
-
-                    // Step 3: based on top features, mark the imageId
-                    for (Integer fid : fids) {
-
-                        String iid = idMap.get(fid);
-
-                        int cc = featureRank.get(fid);
-
-                        if (!result.containsKey(iid)) {
-
-                            result.put(iid, cc * cc);
-                        } else {
-
-                            result.put(iid, result.get(iid) + cc * cc);
-                        }
-                    }
-                }
-            }
-
-            //System.out.println("Rank feature cost: " + (System.currentTimeMillis() - timeFlagArray) + "ms");
-
-            featureRank.clear();
-            featureRank = null;
-        }
-
-        System.out.println("Query feature at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
-        return result;
-    }
-
-    public HashMap<String, Integer> searchByUserDefinedThread(List<LSHVector> query, String keyV, String keyR, int threadNum) {
-
-        // Step 1: generate digests on client
-
-        long timeFlag1 = System.currentTimeMillis();
-
-        List<List<CashDigest>> digests = new ArrayList<List<CashDigest>>(query.size());
-
-        for (LSHVector lshVector : query) {
-
-            List<CashDigest> digestsInL = new ArrayList<CashDigest>(L);
-
-            for (int i = 0; i < lshVector.getDimension(); ++i) {
-
-                digestsInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
-            }
-
-            digests.add(digestsInL);
-        }
-
-        System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
-
-        // Step 2: search on server side
-        long timeFlag2 = System.currentTimeMillis();
-
-        HashMap<String, Integer> result = new HashMap<String, Integer>();
-
-        int maxDigestNum = digests.size();
-
-        //multiple threads
-        MyCountDown threadCounter = new MyCountDown(threadNum);
-
-        for (int j = 0; j < threadNum; j++) {
-
-            TMCQueryThreadV3 t = null;
-
-            if (j == threadNum - 1) {
-
-                List<List<CashDigest>> partDigests = digests.subList(maxDigestNum / threadNum * j, maxDigestNum);
-
-                t = new TMCQueryThreadV3("Thread " + j, threadCounter, partDigests);
-            } else {
-
-                List<List<CashDigest>> partDigests = digests.subList(maxDigestNum / threadNum * j, maxDigestNum / threadNum * (j + 1));
-                t = new TMCQueryThreadV3("Thread " + j, threadCounter, partDigests);
-            }
-
-            t.start();
-        }
-
-        // wait for all threads done
-        while (true) {
-            if (!threadCounter.hasNext())
-                break;
-        }
-
-        result.putAll(CashIndex.searchResult);
-        CashIndex.searchResult.clear();
-
-        System.out.println("Query feature at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
-        return result;
-    }
-
-    /*
-    public HashMap<String, Integer> searchByUserDefinedThread(List<LSHVector> query, String keyV, String keyR, int threadNum) {
-
-        // Step 1: generate digests on client
-
-        long timeFlag1 = System.currentTimeMillis();
-
-        List<List<CashDigest>> digests = new ArrayList<List<CashDigest>>(query.size());
-
-        for (LSHVector lshVector : query) {
-
-            List<CashDigest> digestsInL = new ArrayList<CashDigest>(L);
-
-            for (int i = 0; i < lshVector.getDimension(); ++i) {
-
-                digestsInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
-            }
-
-            digests.add(digestsInL);
-        }
-
-        System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
-
-        // Step 2: search on server side
-
-        long timeFlag2 = System.currentTimeMillis();
-
-        HashMap<String, Integer> result = new HashMap<String, Integer>();
-
-        for (List<CashDigest> digestInL : digests) {
-
-            // Step 1: for each LSH query vector, get the nearest features
-
-
-            // <fid, counter>
-            //ConcurrentHashMap<Integer, Integer> featureRank = new ConcurrentHashMap<Integer, Integer>();
-            featureRank = new HashMap<Integer, Integer>();
-
-            for (int i = 0; i < L; ++i) {
-
-                long k1 = digestInL.get(i).getK1();
-
-                if (!maxC.containsKey(k1)) {
-                    continue;
-                }
-
-                long upC = maxC.get(k1) + 1;
-
-                if (upC < 2000) {
-
-                    for (long c = 0; c < upC; ++c) {
-
-                        long a = serverPosition(k1, c);
-
-                        int fid = CashIndex3.rawIndex.get(a);
-
-                        CashIndex3.featureRankArray[fid] = CashIndex3.featureRankArray[fid] + 1;
-                    }
-
-                } else {
-
-                    MyCountDown threadCounter = new MyCountDown(threadNum);
-
-                    for (int j = 0; j < threadNum; j++) {
-
-                        TMCQueryThreadV2 t = null;
-
-                        if (j == threadNum - 1) {
-
-                            t = new TMCQueryThreadV2("Thread " + j, threadCounter, k1, upC / threadNum * j, upC);
-                        } else {
-
-                            t = new TMCQueryThreadV2("Thread " + j, threadCounter, k1, upC / threadNum * j, upC / threadNum * (j + 1));
-                        }
-
-                        t.start();
-                    }
-
-                    // wait for all threads done
-                    while (true) {
-                        if (!threadCounter.hasNext())
-                            break;
-                    }
-                }
-            }
-
-            //long timeFlagArray = System.currentTimeMillis();
-            for (int i = 1; i < CashIndex3.featureRankArray.length; ++i) {
-
-                if (CashIndex3.featureRankArray[i] >= 2) {
-                    featureRank.put(i, CashIndex3.featureRankArray[i]);
-                }
-                CashIndex3.featureRankArray[i] = 0;
-            }
-            //System.out.println("Filter feature cost: " + (System.currentTimeMillis() - timeFlagArray) + "ms");
-
-            //long timeFlagRank = System.currentTimeMillis();
-
-            // Step 2: rank this feature set
-            if (featureRank.size() > 0) {
-
-                //long timeFlag3 = System.currentTimeMillis();
-
-                List<Integer> fids = rankFeature(2, featureRank);
-
-                //System.out.println("Rank feature cost: " + (System.currentTimeMillis() - timeFlag3) + "ms");
-
-                if (fids.size() > 0) {
-                    //System.out.println("For query feature id = " + queryFid + ":");
-
-                    // Step 3: based on top features, mark the imageId
-                    for (Integer fid : fids) {
-
-                        String iid = idMap.get(fid);
-
-                        int cc = featureRank.get(fid);
-
-                        if (!result.containsKey(iid)) {
-
-                            result.put(iid, cc * cc);
-                        } else {
-
-                            result.put(iid, result.get(iid) + cc * cc);
-                        }
-                    }
-                }
-            }
-
-            //System.out.println("Rank feature cost: " + (System.currentTimeMillis() - timeFlagArray) + "ms");
-
-            featureRank.clear();
-            featureRank = null;
-        }
-
-        System.out.println("Query feature at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
-        return result;
-    }*/
-
-    /*
-    public HashMap<String, Integer> search(List<LSHVector> query, String keyV, String keyR) {
-
-        // Step 1: generate digests on client
-
-        long timeFlag1 = System.currentTimeMillis();
-
-        List<List<CashDigest>> digests = new ArrayList<List<CashDigest>>(query.size());
-
-        for (LSHVector lshVector : query) {
-
-            List<CashDigest> digestsInL = new ArrayList<CashDigest>(L);
-
-            for (int i = 0; i < lshVector.getDimension(); ++i) {
-
-                digestsInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
-            }
-
-            digests.add(digestsInL);
-        }
-
-        System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
-
-        // Step 2: search on server side
-
-
-
-        HashMap<String, Integer> result = new HashMap<String, Integer>();
-
-        for (List<CashDigest> digestInL : digests) {
-
-            // Step 1: for each LSH query vector, get the nearest features
-
-            long timeFlag2 = System.currentTimeMillis();
-
-            // <fid, counter>
-            HashMap<Integer, Integer> featureRank = new HashMap<Integer, Integer>();
-
-            //long timeFlag0 = System.currentTimeMillis();
-
-            for (int i = 0; i < L; ++i) {
-
-                long k1 = digestInL.get(i).getK1();
-                //long k2
-
-                long c = 1; // start from 1
-
-                while (true) {
-
-                    long a = serverPosition(k1, c);
-
-                    // if does not exist, directly insert
-                    if (rawIndex.containsKey(a)) {
-
-                        //long timeFlag01 = System.currentTimeMillis();
-
-                        int fid = rawIndex.get(a);
-
-                        //System.out.println("Compute position cost: " + (System.currentTimeMillis() - timeFlag01) + "ms");
-                        if (!featureRank.containsKey(fid)) {
-
-                            featureRank.put(fid, 1);
-                        } else {
-
-                            featureRank.put(fid, featureRank.get(fid) + 1);
-                        }
-                    } else {
-                        break;
-                    }
-
-                    ++c;
-                }
-            }
-
-            System.out.println("Query feature cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
-
-            // Step 2: rank this feature set
-            if (featureRank.size() > 0) {
-
-                long timeFlag3 = System.currentTimeMillis();
-
-                List<Integer> fids = rankFeature(2, featureRank);
-
-                System.out.println("Rank feature cost: " + (System.currentTimeMillis() - timeFlag3) + "ms");
-
-                if (fids.size() > 0) {
-                    //System.out.println("For query feature id = " + queryFid + ":");
-
-                    // Step 3: based on top features, mark the imageId
-                    for (Integer fid : fids) {
-
-                        String iid = idMap.get(fid);
-
-                        int cc = featureRank.get(fid);
-
-                        if (!result.containsKey(iid)) {
-
-                            result.put(iid, cc * cc);
-                        } else {
-
-                            result.put(iid, result.get(iid) + cc * cc);
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
-    }*/
-
-    /*
-    public HashMap<String, Integer> search(List<LSHVector> query) {
-
-        HashMap<String, Integer> result = new HashMap<String, Integer>();
-
-        //int queryFid = 0;
-
-        for (LSHVector lshVector : query) {
-
-            //queryFid++;
-
-            // Step 1: for each LSH query vector, get the nearest features
-
-            // <fid, counter>
-            HashMap<Integer, Integer> featureRank = new HashMap<Integer, Integer>();
-
-            //long timeFlag0 = System.currentTimeMillis();
-
-            for (int i = 0; i < lshVector.getDimension(); ++i) {
-
-                Long lshValue = lshVector.getLSHValueByIndex(i);
-
-                long c = 1; // start from 1
-
-                // TODO: double check the connection method
-                String k1 = 1 + "xx" + lshValue + "xx" + i;
-                //long k2 = Long.parseLong(2 + "00" + lshValue + "00" + i);
-
-                //boolean notExist = false;
-
-                //int tmp = 0;
-
-                while (true) {
-
-                    long a = serverPosition(k1, c);
-
-                    // if does not exist, directly insert
-                    if (rawIndex.containsKey(a)) {
-
-                        //long timeFlag01 = System.currentTimeMillis();
-
-                        int fid = rawIndex.get(a);
-
-                        //System.out.println("Compute position cost: " + (System.currentTimeMillis() - timeFlag01) + "ms");
-                        if (!featureRank.containsKey(fid)) {
-
-                            featureRank.put(fid, 1);
-                        } else {
-
-                            featureRank.put(fid, featureRank.get(fid) + 1);
-                        }
-                    } else {
-                        break;
-                    }
-
-                    ++c;
-                }
-            }
-
-            //System.out.println("Query feature cost: " + (System.currentTimeMillis() - timeFlag0) + "ms");
-
-            // Step 2: rank this feature set
-            if (featureRank.size() > 0) {
-
-                //long timeFlag1 = System.currentTimeMillis();
-
-                List<Integer> fids = rankFeature(2, featureRank);
-
-                //System.out.println("Rank feature cost: " + (System.currentTimeMillis() - timeFlag1) + "ms");
-
-                if (fids.size() > 0) {
-                    //System.out.println("For query feature id = " + queryFid + ":");
-
-                    // Step 3: based on top features, mark the imageId
-                    for (Integer fid : fids) {
-
-                        String iid = idMap.get(fid);
-
-                        int cc = featureRank.get(fid);
-
-                        if (!result.containsKey(iid)) {
-
-                            result.put(iid, cc*cc);
-                        } else {
-
-                            result.put(iid, result.get(iid) + cc*cc);
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-    */
+		return result;
+	}
 
     public List<Integer> rankFeature(int threshold, HashMap<Integer, Integer> featureRank) {
 
@@ -676,7 +178,7 @@ public class CashIndex {
         }*/
 
         // 调用内部类的构造器，如果这个内部类是静态内部类，就比这个好办点了。。
-        CashIndex.ValueComparator2 mc = new ValueComparator2();
+        CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
         // 开始排序，传入比较器对象
         Collections.sort(list, mc);
 
@@ -704,7 +206,7 @@ public class CashIndex {
         // 把map转化为Map.Entry然后放到用于排序的list里面
         list.addAll(cc.entrySet());
         // 调用内部类的构造器，如果这个内部类是静态内部类，就比这个好办点了。。
-        CashIndex.ValueComparator mc = new ValueComparator();
+        CashIndex.StringValueComparator mc = new StringValueComparator();
         // 开始排序，传入比较器对象
         Collections.sort(list, mc);
 
@@ -720,154 +222,42 @@ public class CashIndex {
 
         return result;
     }
+    
+    public static List<Integer> topKPatches(int topK, HashMap<Integer, Integer> cc) {
 
-    private static class ValueComparator implements Comparator<Map.Entry<String, Integer>> {
+        List<Integer> result = new ArrayList<Integer>();
+
+        List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
+        // 把map转化为Map.Entry然后放到用于排序的list里面
+        list.addAll(cc.entrySet());
+        // 调用内部类的构造器，如果这个内部类是静态内部类，就比这个好办点了。。
+        CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
+        // 开始排序，传入比较器对象
+        Collections.sort(list, mc);
+
+        // 遍历在list中排序之后的HashMap
+        for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext(); ) {
+
+            result.add(it.next().getKey());
+
+            if (--topK <= 0) {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    private static class StringValueComparator implements Comparator<Map.Entry<String, Integer>> {
         public int compare(Map.Entry<String, Integer> m, Map.Entry<String, Integer> n) {
             return (int) (n.getValue() - m.getValue());
         }
     }
 
-    private static class ValueComparator2 implements Comparator<Map.Entry<Integer, Integer>> {
+    private static class IntegerValueComparator implements Comparator<Map.Entry<Integer, Integer>> {
         public int compare(Map.Entry<Integer, Integer> m, Map.Entry<Integer, Integer> n) {
             return (int) (n.getValue() - m.getValue());
         }
-    }
-
-    private int serverPosition(long k1Vj, long counter) {
-
-        return (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(counter), Long.toString(k1Vj)));
-    }
-}
-
-class TMCQueryThread extends Thread {
-
-    private MyCountDown threadCounter;
-
-    private int lIndex;
-
-    private List<CashDigest> digestInL;
-
-    public TMCQueryThread(String threadName, MyCountDown threadCounter, int lIndex, List<CashDigest> digestInL) {
-
-        super(threadName);
-
-        this.threadCounter = threadCounter;
-        this.lIndex = lIndex;
-        this.digestInL = digestInL;
-    }
-
-    public void run() {
-
-        //System.out.println(getName() + " is running! at L index : " + this.lIndex);
-
-        long k1 = digestInL.get(lIndex).getK1();
-        //long k2
-
-        long c = 0; // start from 0
-
-        while (true) {
-
-            long a = serverPosition(k1, c);
-            // if does not exist, directly insert
-            if (CashIndex.rawIndex.containsKey(a)) {
-
-                int fid = CashIndex.rawIndex.get(a);
-
-                long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(fid), Long.toString(k1)));
-                if (!CashIndex.revidSet.contains(revid)) {
-
-                    synchronized (this) {
-
-                        CashIndex.featureRankArray[fid] = CashIndex.featureRankArray[fid] + 1;
-                    }
-                }
-            } else {
-                break;
-            }
-
-            ++c;
-        }
-
-        // deal with the added table
-        c = 0; // start from 0
-
-        while (true) {
-
-            long a = serverPosition(k1, c);
-            // if does not exist, directly insert
-            if (CashIndex.dynamicIndex.containsKey(a)) {
-
-                int fid = CashIndex.dynamicIndex.get(a);
-
-                long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(fid), Long.toString(k1)));
-                if (!CashIndex.revidSet.contains(revid)) {
-
-                    synchronized (this) {
-
-                        CashIndex.featureRankArray[fid] = CashIndex.featureRankArray[fid] + 1;
-                    }
-                }
-            } else {
-                break;
-            }
-
-            ++c;
-        }
-
-        threadCounter.countDown();
-    }
-
-    private int serverPosition(long k1Vj, long counter) {
-
-        return (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(counter), Long.toString(k1Vj)));
-    }
-}
-
-class TMCQueryThreadV2 extends Thread {
-
-    private MyCountDown threadCounter;
-
-    private long startC;
-
-    private long endC;
-
-    private long k1;
-
-    public TMCQueryThreadV2(String threadName, MyCountDown threadCounter, long k1, long startC, long endC) {
-
-        super(threadName);
-
-        this.threadCounter = threadCounter;
-        this.k1 = k1;
-        this.startC = startC;
-        this.endC = endC;
-    }
-
-    public void run() {
-
-        //System.out.println(getName() + " is running! startC = " + this.startC + ", endC = " + this.endC);
-
-        for (long c = startC; c < endC; ++c) {
-
-            long a = serverPosition(k1, c);
-
-            int fid = CashIndex.rawIndex.get(a);
-
-            synchronized (this) {
-
-                CashIndex.featureRankArray[fid] = CashIndex.featureRankArray[fid] + 1;
-            }
-
-            /*if (!CashIndex3.featureRank.containsKey(fid)) {
-
-                CashIndex3.featureRank.put(fid, 1);
-            } else {
-
-                CashIndex3.featureRank.put(fid, CashIndex3.featureRank.get(fid) + 1);
-            }*/
-        }
-
-        threadCounter.countDown();
     }
 
     private int serverPosition(long k1Vj, long counter) {

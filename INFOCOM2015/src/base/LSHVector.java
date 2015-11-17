@@ -33,6 +33,17 @@ public class LSHVector {
         this.id = _id;
         this.lshValues = new ArrayList<Long>(_lshValues);
     }
+    
+    public LSHVector(int _id, long[] _lshValues, final short _dimension) {
+
+        this.dimension = _dimension;
+        this.id = _id;
+        this.lshValues = new ArrayList<Long>(_dimension);
+        
+        for (int i = 0; i < dimension; ++i) {
+            this.lshValues.add(i, _lshValues[i]);
+        }
+    }
 
     public LSHVector(int _id, String _itemStr, final short _dimension) {
 

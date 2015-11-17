@@ -12,7 +12,7 @@ import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
 
 import base.Imshow;
-import prepare.PrepareTool;
+import util.PrepareTool;
 
 public class BatchExtPatch {
 

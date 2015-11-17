@@ -2,15 +2,15 @@ package base;
 
 import java.util.List;
 
-public class Image {
+public class QueryImage {
 		
 	private String name;
 	
 	private int iid;
 	
-	private List<Patch> patches;
+	private List<PatchWithLSH> patches;
 	
-	public Image(String name, int iid, List<Patch> patches) {
+	public QueryImage(String name, int iid, List<PatchWithLSH> patches) {
 		
 		this.name = name;
 		
@@ -19,7 +19,7 @@ public class Image {
 		this.patches = patches;
 	}
 	
-	public Patch getPatchByPatchIndex(int patchIndex) {
+	public PatchWithLSH getPatchByPatchIndex(int patchIndex) {
 		
 		return this.patches.get(patchIndex);
 	}
@@ -40,11 +40,11 @@ public class Image {
 		this.iid = iid;
 	}
 
-	public List<Patch> getPatches() {
+	public List<PatchWithLSH> getPatches() {
 		return patches;
 	}
 
-	public void setPatches(List<Patch> patches) {
+	public void setPatches(List<PatchWithLSH> patches) {
 		this.patches = patches;
 	}
 

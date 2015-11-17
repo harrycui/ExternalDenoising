@@ -18,11 +18,6 @@ public class Image {
 		
 		this.patches = patches;
 	}
-	
-	public Patch getPatchByPatchIndex(int patchIndex) {
-		
-		return this.patches.get(patchIndex);
-	}
 
 	public String getName() {
 		return name;

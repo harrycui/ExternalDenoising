@@ -31,4 +31,9 @@ public class PatchWithLSH extends Patch {
 	public void setLshValues(long[] lshValues) {
 		this.lshValues = lshValues;
 	}
+	
+	public Patch convert2Patch() {
+		
+		return new Patch(this.getPid(), this.getDim(), this.getPixels());
+	}
 }

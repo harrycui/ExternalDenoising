@@ -20,3 +20,5 @@ queryImagePath = grayQuery/
 oriImagePath = grayQueryOri/
 
 outputPath = out/
+
+numOfThread = 4

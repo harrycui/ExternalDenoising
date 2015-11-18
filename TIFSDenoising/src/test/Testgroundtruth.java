@@ -85,8 +85,14 @@ public class Testgroundtruth {
 		assert(numOfPatchInOneImage == queryImageInPatch.getPatches().size());
 		
 		System.out.println("Now, searching similar patches...\n");
+		
+		long startTime = System.currentTimeMillis();
 			
 		RecoverImage recoverImage = Testgroundtruth.findSimilarPatchesAtCloud(queryImageInPatch, dbPatchesList, numOfPatchInOneImage, fitHeight, fitWidth, numOfPatchInOneRow, step, overlap, threshold);
+		
+		long stopTime1 = System.currentTimeMillis();
+
+		System.out.println("Searching time is " + (stopTime1 - startTime) + " ms");
 		
 		System.out.println("Now, recovering image from patches...\n");
 		

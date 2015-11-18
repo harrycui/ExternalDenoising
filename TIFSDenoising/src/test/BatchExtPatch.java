@@ -1,5 +1,6 @@
 package test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +14,7 @@ import org.opencv.highgui.Highgui;
 
 import base.Imshow;
 import util.ConfigParser;
+import util.FileUtil;
 import util.PrepareTool;
 
 public class BatchExtPatch {
@@ -24,6 +26,8 @@ public class BatchExtPatch {
 		if (args.length < 1) {
 
 			System.out.println("Error: no argument provided!");
+			
+			return;
 		}
 
 		System.out.println("\nLoad image file list.");
@@ -45,6 +49,16 @@ public class BatchExtPatch {
 		String outputPath = config.getString("outputPath").replace("\\", "/");
 
 		System.out.print("Start reading image file list...\n");
+		
+		
+		
+		if (type.equals("database")) {
+			
+			FileUtil.deleteFile(outputPath + "patchDB-" + step + "-" + overlap + ".txt");
+		} else {
+			
+			FileUtil.deleteDirectory(outputPath + step + "-" + overlap + "/" + sigma + "/");
+		}
 
 		try {
 			List<Path> imagePathList = Files.walk(Paths.get(inputPath)).filter(Files::isRegularFile)

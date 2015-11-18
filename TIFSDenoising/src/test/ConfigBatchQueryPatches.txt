@@ -1,0 +1,15 @@
+
+step = 8
+
+overlap = 1
+
+sigma = 10
+
+inputPath = /Users/cuihelei/Desktop/denoisingTest/grayQuery/
+
+outputPath = /Users/cuihelei/Desktop/denoisingTest/queryPatches/
+
+# database, query 
+type = query
+
+showImage = false

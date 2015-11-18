@@ -7,6 +7,18 @@ public class Patch {
 	private int dim;
 	
 	private int[] pixels;
+	
+	public Patch(Patch p) {
+		
+		this.pid = p.getPid();
+		this.dim = p.getDim();
+		this.pixels = new int[dim];
+		
+		for (int i = 0; i < dim; i++) {
+			
+			this.pixels[i] = p.getPixels()[i];
+		}
+	}
 
 	public Patch(int pid, int dim, int[] pixels) {
 

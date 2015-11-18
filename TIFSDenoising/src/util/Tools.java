@@ -256,71 +256,79 @@ public class Tools {
 
 	private static Patch nlmDenoise(Patch queryPatch, List<Patch> similarPatches, int step, int threshold, int sigma, double k) {
 
-		List<Integer> indList = new ArrayList<Integer>();
+		if (similarPatches.size() == 0) {
 
-		List<Double> weightList = new ArrayList<Double>();
-		
-		//double k = 0.35;
+			Patch denoisedPatch = new Patch(queryPatch);
 
-		double h = k * k * sigma * sigma;
+			return denoisedPatch;
+		} else {
 
-		double weightSum = 0;
+			List<Integer> indList = new ArrayList<Integer>();
 
-		// 1. Compute distances
+			List<Double> weightList = new ArrayList<Double>();
 
-		for (int i = 0; i < similarPatches.size(); i++) {
+			// double k = 0.35;
 
-			double tempDist = computeEuclideanDist(queryPatch.getPixels(), similarPatches.get(i).getPixels());
+			double h = k * k * sigma * sigma;
 
-			if (!(tempDist > threshold)) {
+			double weightSum = 0;
 
-				double weight = Math.exp(-(tempDist / h));
+			// 1. Compute distances
 
-				weightSum += weight;
+			for (int i = 0; i < similarPatches.size(); i++) {
 
-				weightList.add(weight);
+				double tempDist = computeEuclideanDist(queryPatch.getPixels(), similarPatches.get(i).getPixels());
 
-				indList.add(i);
+				if (!(tempDist > threshold)) {
+
+					double weight = Math.exp(-(tempDist / h));
+
+					weightSum += weight;
+
+					weightList.add(weight);
+
+					indList.add(i);
+
+				}
 
 			}
 
-		}
+			List<double[]> weightedPixelsList = new ArrayList<double[]>();
 
-		List<double[]> weightedPixelsList = new ArrayList<double[]>();
+			for (int j = 0; j < weightList.size(); j++) {
 
-		for (int j = 0; j < weightList.size(); j++) {
+				double tempWeight = weightList.get(j) / weightSum;
 
-			double tempWeight = weightList.get(j) / weightSum;
+				double[] tempWeightedPixels = new double[step * step];
 
-			double[] tempWeightedPixels = new double[step * step];
+				for (int l = 0; l < step * step; l++) {
+
+					tempWeightedPixels[l] = tempWeight * (similarPatches.get(indList.get(j)).getPixels()[l]);
+
+				}
+
+				weightedPixelsList.add(tempWeightedPixels);
+
+			}
+
+			int[] pixels = new int[step * step];
 
 			for (int l = 0; l < step * step; l++) {
 
-				tempWeightedPixels[l] = tempWeight * (similarPatches.get(indList.get(j)).getPixels()[l]);
+				for (int t = 0; t < weightedPixelsList.size(); t++) {
+
+					pixels[l] += (int) Math.floor(weightedPixelsList.get(t)[l]);
+
+				}
 
 			}
 
-			weightedPixelsList.add(tempWeightedPixels);
+			int pid = queryPatch.getPid();
 
+			Patch denoisedPatch = new Patch(pid, step * step, pixels);
+
+			return denoisedPatch;
 		}
-
-		int[] pixels = new int[step * step];
-
-		for (int l = 0; l < step * step; l++) {
-
-			for (int t = 0; t < weightedPixelsList.size(); t++) {
-
-				pixels[l] += (int) Math.floor(weightedPixelsList.get(t)[l]);
-
-			}
-
-		}
-
-		int pid = queryPatch.getPid();
-
-		Patch denoisedPatch = new Patch(pid, step * step, pixels);
-
-		return denoisedPatch;
 	}
 
 	public static double psnr(int[][] ori, int[][] dst) {

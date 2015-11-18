@@ -1,5 +1,5 @@
 
-testImageName = test4
+testImageName = test2
 
 step = 8
 
@@ -9,12 +9,16 @@ sigma = 10
 
 k = 0.35
 
-dbPatchPath = 		/Users/cuihelei/Desktop/dbPatches/
+rootPath = /Users/cuihelei/Desktop/denoisingTest/
 
-queryPatchPath =		/Users/cuihelei/Desktop/queryPatches/
+dbPatchPath = dbPatches/
 
-queryImagePath =		/Users/cuihelei/Desktop/grayQuery/
+queryPatchPath = queryPatches/
 
-oriImagePath = 		/Users/cuihelei/Desktop/grayQueryOri/
+queryImagePath = grayQuery/
 
-outputPath = 		/Users/cuihelei/Desktop/out/
+oriImagePath = grayQueryOri/
+
+outputPath = out/
+
+numOfThread = 8

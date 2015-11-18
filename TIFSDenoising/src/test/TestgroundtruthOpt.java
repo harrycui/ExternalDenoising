@@ -188,5 +188,4 @@ public class TestgroundtruthOpt {
 		
 		return new RecoverImage(image.getName(), numOfPatchInOneImage, fitHeight, fitWidth, patchWidth, step, overlap, patches);
 	}
-
 }

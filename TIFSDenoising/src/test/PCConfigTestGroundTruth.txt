@@ -1,5 +1,5 @@
 
-testImageName = test4
+testImageName = test2
 
 step = 8
 
@@ -21,4 +21,4 @@ oriImagePath = grayQueryOri/
 
 outputPath = out/
 
-numOfThread = 4
+numOfThread = 8

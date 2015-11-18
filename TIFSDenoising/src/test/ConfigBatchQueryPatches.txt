@@ -1,7 +1,7 @@
 
-step = 8
+step = 2
 
-overlap = 1
+overlap = 2
 
 sigma = 10
 

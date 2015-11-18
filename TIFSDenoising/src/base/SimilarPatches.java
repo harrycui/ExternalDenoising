@@ -13,7 +13,7 @@ public class SimilarPatches {
 	public SimilarPatches(int pid, Patch queryPatch, List<Patch> patches) {
 		super();
 		this.pid = pid;
-		this.queryPatch = queryPatch;
+		this.queryPatch = new Patch(queryPatch);
 		this.patches = patches;
 	}
 

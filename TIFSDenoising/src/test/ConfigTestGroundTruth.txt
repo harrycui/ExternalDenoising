@@ -1,13 +1,13 @@
 
 testImageName = test2
 
-step = 8
+step = 9
 
-overlap = 1
+overlap = 2
 
 sigma = 10
 
-k = 0.35
+k = 0.25
 
 rootPath = /Users/cuihelei/Desktop/denoisingTest/
 
@@ -21,4 +21,4 @@ oriImagePath = grayQueryOri/
 
 outputPath = out/
 
-numOfThread = 8
+numOfThread = 2

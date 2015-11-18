@@ -41,17 +41,22 @@ public class Testgroundtruth {
 		ConfigParser config = new ConfigParser(args[0]);
 		
 		
-		String 	testImageName 	= config.getString("testImageName");
+		String testImageName = config.getString("testImageName");
+
+		int step = config.getInt("step");
+		int overlap = config.getInt("overlap");
+		int sigma = config.getInt("sigma");
+		double k = Double.parseDouble(config.getString("k"));
 		
-		int 		step 			= config.getInt("step");
-		int 		overlap			= config.getInt("overlap");
-		int		sigma			= config.getInt("sigma");
-		double	k				= Double.parseDouble(config.getString("k"));
-		String 	dbPatchPath 		= config.getString("dbPatchPath") + "patchDB-" + step + "-" + overlap + ".txt";
-		String 	queryPatchPath 	= config.getString("queryPatchPath") + step + "-" + overlap + "/" + sigma + "/" + testImageName + "." + sigma + ".jpg.txt";
-		String 	queryImagePath	= config.getString("queryImagePath") + sigma + "/" + testImageName + "." + sigma + ".jpg";
-		String 	oriImagePath		= config.getString("oriImagePath") + testImageName + ".jpg";;
-		String 	outputPath		= config.getString("outputPath") + step + "-" + overlap + "/" + sigma + "/";
+		String rootPath = config.getString("rootPath").replace("\\", "/");
+		
+		String dbPatchPath = rootPath + config.getString("dbPatchPath") + "patchDB-" + step + "-" + overlap + ".txt";
+		String queryPatchPath = rootPath + config.getString("queryPatchPath") + step + "-" + overlap + "/" + sigma + "/"
+				+ testImageName + "." + sigma + ".jpg.txt";
+		String queryImagePath = rootPath + config.getString("queryImagePath") + sigma + "/" + testImageName + "." + sigma + ".jpg";
+		String oriImagePath = rootPath + config.getString("oriImagePath") + testImageName + ".jpg";
+		;
+		String outputPath = rootPath + config.getString("outputPath") + step + "-" + overlap + "/" + sigma + "/";
 		
 		
 		Mat oriImageMat = Highgui.imread(oriImagePath);

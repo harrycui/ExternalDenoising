@@ -36,13 +36,13 @@ public class BatchExtPatch {
 		int sigma = config.getInt("sigma");
 		String type = config.getString("type");
 		boolean isShowImage = config.getBool("showImage");
-		String inputPath = config.getString("inputPath");
+		String inputPath = config.getString("inputPath").replace("\\", "/");
 		
 		if (type.equals("query")) {
 			inputPath +=  sigma + "/";
 		}
 		
-		String outputPath = config.getString("outputPath");
+		String outputPath = config.getString("outputPath").replace("\\", "/");
 
 		System.out.print("Start reading image file list...\n");
 
@@ -56,7 +56,7 @@ public class BatchExtPatch {
 
 			for (int i = 0; i < imagePathList.size(); ++i) {
 
-				String tempPath = imagePathList.get(i).toString();
+				String tempPath = imagePathList.get(i).toString().replace("\\", "/");
 				
 				String outputFilePath = null;
 				

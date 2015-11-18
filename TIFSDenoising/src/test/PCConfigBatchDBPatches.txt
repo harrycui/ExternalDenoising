@@ -1,0 +1,15 @@
+
+step = 8
+
+overlap = 1
+
+sigma = 10
+
+inputPath = C:\Users\Helei\Desktop\denoisingTest\grayDB\
+
+outputPath = C:\Users\Helei\Desktop\denoisingTest\dbPatches\
+
+# database, query 
+type = database
+
+showImage = false

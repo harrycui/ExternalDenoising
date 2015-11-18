@@ -1,0 +1,22 @@
+
+testImageName = test4
+
+step = 8
+
+overlap = 1
+
+sigma = 10
+
+k = 0.35
+
+rootPath = C:\Users\Helei\Desktop\denoisingTest\
+
+dbPatchPath = dbPatches/
+
+queryPatchPath = queryPatches/
+
+queryImagePath = grayQuery/
+
+oriImagePath = grayQueryOri/
+
+outputPath = out/

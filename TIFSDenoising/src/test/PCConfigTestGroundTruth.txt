@@ -1,9 +1,9 @@
 
 testImageName = test2
 
-step = 8
+step = 9
 
-overlap = 1
+overlap = 2
 
 sigma = 10
 

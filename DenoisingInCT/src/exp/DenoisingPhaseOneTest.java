@@ -2,8 +2,8 @@ package exp;
 
 import base.*;
 import index.CashIndex;
-import tool.PRF;
-import tool.TimeUtil;
+import util.PRF;
+import util.TimeUtil;
 
 import java.io.*;
 import java.util.*;
@@ -26,6 +26,8 @@ public class DenoisingPhaseOneTest {
 	public static final int IMAGE_STEP = 8;
 	
 	public static final int IMAGE_OVERLAP = 1;
+	
+	public static final int PATCH_WIDTH = 37;
 
 	public static boolean isQueryImagesLoaded = false;
 
@@ -554,8 +556,8 @@ public class DenoisingPhaseOneTest {
 				
 				//System.out.println(lshPatches.size() + " " + smcPatches.size());
 				
-				RecoverImage imageByLSH = new RecoverImage(DenoisingPhaseOneTest.PATCH_NUM_IN_ONE_IMAGE, DenoisingPhaseOneTest.IMAGE_HEIGHT, DenoisingPhaseOneTest.IMAGE_WIDTH, DenoisingPhaseOneTest.IMAGE_STEP, DenoisingPhaseOneTest.IMAGE_OVERLAP, lshPatches);
-				RecoverImage imageBySMC = new RecoverImage(DenoisingPhaseOneTest.PATCH_NUM_IN_ONE_IMAGE, DenoisingPhaseOneTest.IMAGE_HEIGHT, DenoisingPhaseOneTest.IMAGE_WIDTH, DenoisingPhaseOneTest.IMAGE_STEP, DenoisingPhaseOneTest.IMAGE_OVERLAP, smcPatches);
+				RecoverImage imageByLSH = new RecoverImage(queryImages.get(queryIndex - 1).getName(), DenoisingPhaseOneTest.PATCH_NUM_IN_ONE_IMAGE, DenoisingPhaseOneTest.IMAGE_HEIGHT, DenoisingPhaseOneTest.IMAGE_WIDTH, DenoisingPhaseOneTest.PATCH_WIDTH, DenoisingPhaseOneTest.IMAGE_STEP, DenoisingPhaseOneTest.IMAGE_OVERLAP, lshPatches);
+				RecoverImage imageBySMC = new RecoverImage(queryImages.get(queryIndex - 1).getName(), DenoisingPhaseOneTest.PATCH_NUM_IN_ONE_IMAGE, DenoisingPhaseOneTest.IMAGE_HEIGHT, DenoisingPhaseOneTest.IMAGE_WIDTH, DenoisingPhaseOneTest.PATCH_WIDTH, DenoisingPhaseOneTest.IMAGE_STEP, DenoisingPhaseOneTest.IMAGE_OVERLAP, smcPatches);
 				
 				System.out.println("Two images are writen to files under " + outputPath);
 			}

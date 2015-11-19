@@ -4,7 +4,7 @@ import java.util.List;
 
 import base.CashDigest;
 import index.CashIndex;
-import tool.PRF;
+import util.PRF;
 
 public class OnePatchQueryThread extends Thread {
 	private MyCountDown threadCounter;

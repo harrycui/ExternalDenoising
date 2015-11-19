@@ -1,4 +1,4 @@
-package tool;
+package util;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -8,7 +8,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static tool.BaseTool.bytes2Hex;
+import static util.BaseTool.bytes2Hex;
 
 /**
  * Created by HarryC on 7/5/14.

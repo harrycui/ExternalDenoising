@@ -1,9 +1,9 @@
 package test;
 
-import tool.AESCoder;
-import tool.BaseTool;
-import tool.MathTool;
-import tool.PRF;
+import util.AESCoder;
+import util.BaseTool;
+import util.MathTool;
+import util.PRF;
 
 import java.security.Key;
 
@@ -59,7 +59,7 @@ public class functionTest {
         Key k = AESCoder.toKey(PRF.SHA256("cityu", 64).getBytes());
 
         Long data = 4294967296L;
-        System.out.println("加密前数据: string:" + data);
+        System.out.println("åŠ å¯†å‰�æ•°æ�®: string:" + data);
         System.out.println();
         byte[] encryptData = new byte[0];
         try {
@@ -75,8 +75,8 @@ public class functionTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        //System.out.println("解密后数据: byte[]:" + showByteArray(decryptData));
-        System.out.println("解密后数据: long:" + Long.parseLong(new String(decryptData)));
+        //System.out.println("è§£å¯†å�Žæ•°æ�®: byte[]:" + showByteArray(decryptData));
+        System.out.println("è§£å¯†å�Žæ•°æ�®: long:" + Long.parseLong(new String(decryptData)));
     }
 
     public static long encryptValue(String key2, long lshValue, int position, int id) {

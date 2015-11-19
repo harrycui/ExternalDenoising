@@ -1,6 +1,6 @@
 package base;
 
-import tool.PRF;
+import util.PRF;
 
 /**
  * Created by HarryC on 1/9/15.

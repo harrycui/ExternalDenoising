@@ -1,6 +1,6 @@
 package index;
 
-import tool.PRF;
+import util.PRF;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -162,7 +162,7 @@ public class CashIndex {
 
         List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
 
-        // 把map转化为Map.Entry然后放到用于排序的list里面
+        // æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
         list.addAll(featureRank.entrySet());
 
 
@@ -177,12 +177,12 @@ public class CashIndex {
             }
         }*/
 
-        // 调用内部类的构造器，如果这个内部类是静态内部类，就比这个好办点了。。
+        // è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
         CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
-        // 开始排序，传入比较器对象
+        // å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
         Collections.sort(list, mc);
 
-        // 遍历在list中排序之后的HashMap
+        // é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
         for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext(); ) {
 
             //Map.Entry<Integer, Integer> tmp = it.next();
@@ -203,14 +203,14 @@ public class CashIndex {
         List<String> result = new ArrayList<String>();
 
         List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>();
-        // 把map转化为Map.Entry然后放到用于排序的list里面
+        // æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
         list.addAll(cc.entrySet());
-        // 调用内部类的构造器，如果这个内部类是静态内部类，就比这个好办点了。。
+        // è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
         CashIndex.StringValueComparator mc = new StringValueComparator();
-        // 开始排序，传入比较器对象
+        // å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
         Collections.sort(list, mc);
 
-        // 遍历在list中排序之后的HashMap
+        // é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
         for (Iterator<Map.Entry<String, Integer>> it = list.iterator(); it.hasNext(); ) {
 
             result.add(it.next().getKey());
@@ -228,14 +228,14 @@ public class CashIndex {
         List<Integer> result = new ArrayList<Integer>();
 
         List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
-        // 把map转化为Map.Entry然后放到用于排序的list里面
+        // æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
         list.addAll(cc.entrySet());
-        // 调用内部类的构造器，如果这个内部类是静态内部类，就比这个好办点了。。
+        // è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
         CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
-        // 开始排序，传入比较器对象
+        // å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
         Collections.sort(list, mc);
 
-        // 遍历在list中排序之后的HashMap
+        // é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
         for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext(); ) {
 
             result.add(it.next().getKey());

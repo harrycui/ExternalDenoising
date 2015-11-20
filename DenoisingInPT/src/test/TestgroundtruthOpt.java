@@ -25,7 +25,8 @@ import util.Tools;
 
 public class TestgroundtruthOpt {
 	
-	public static final int NUM_OF_MAX_PATCH = 50;
+	//public static final int NUM_OF_MAX_PATCH = 50;
+	public static int topK;
 
 	public static void main(String[] args) {
 		
@@ -48,6 +49,8 @@ public class TestgroundtruthOpt {
 		int sigma = config.getInt("sigma");
 		double k = Double.parseDouble(config.getString("k"));
 		int numOfThread = config.getInt("numOfThread");
+		
+		topK = config.getInt("topK");
 		
 		String rootPath = config.getString("rootPath").replace("\\", "/");
 		

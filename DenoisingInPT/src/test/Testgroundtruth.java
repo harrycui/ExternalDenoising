@@ -25,7 +25,8 @@ import util.Tools;
 
 public class Testgroundtruth {
 	
-	public static final int NUM_OF_MAX_PATCH = 50;
+	//public static final int NUM_OF_MAX_PATCH = 50;
+	public static int topK;
 
 	public static void main(String[] args) {
 		
@@ -177,7 +178,7 @@ public class Testgroundtruth {
 			
 			Iterator<Map.Entry<Integer, List<Integer>>> entries2 = distMap.entrySet().iterator();
 
-			List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(50);
+			List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(TestgroundtruthOpt.topK);
 			boolean isFullForOnePatch = false;
 			while (entries2.hasNext()) {
 
@@ -189,7 +190,7 @@ public class Testgroundtruth {
 			    	
 					similarPatchesForOnePatch.add(dbPatchesMap.get(entry.getValue().get(j)));
 					
-					if (similarPatchesForOnePatch.size() >= Testgroundtruth.NUM_OF_MAX_PATCH) {
+					if (similarPatchesForOnePatch.size() >= Testgroundtruth.topK) {
 						isFullForOnePatch = true;
 						break;
 					}

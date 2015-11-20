@@ -76,7 +76,7 @@ public class QueryThread extends Thread {
 			
 			Iterator<Map.Entry<Integer, List<Integer>>> entries2 = distMap.entrySet().iterator();
 
-			List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(50);
+			List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(TestgroundtruthOpt.topK);
 			boolean isFullForOnePatch = false;
 			while (entries2.hasNext()) {
 
@@ -88,7 +88,7 @@ public class QueryThread extends Thread {
 			    	
 					similarPatchesForOnePatch.add(dbPatchesMap.get(entry.getValue().get(j)));
 					
-					if (similarPatchesForOnePatch.size() >= TestgroundtruthOpt.NUM_OF_MAX_PATCH) {
+					if (similarPatchesForOnePatch.size() >= TestgroundtruthOpt.topK) {
 						isFullForOnePatch = true;
 						break;
 					}

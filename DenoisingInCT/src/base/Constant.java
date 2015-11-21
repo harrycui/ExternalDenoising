@@ -11,19 +11,10 @@ public class Constant {
     public static final int ERROR_ARGUMENTS = 2;
 
 
-    // Insert result
-    public static final short INSERT_DIRECT = 1;
-
-    public static final short INSERT_KICK = 2;
-
-    public static final short INSERT_COUNTER = 3;
-
-    public static final short INSERT_FAIL = 0;
-
-
-    //
+    // Operation type
     public static final int OPERATION_LOAD_QUERY_IMAGE = 1;
     public static final int OPERATION_LOAD_RAW_PATCH = 2;
     public static final int OPERATION_QUERY_TEST_BY_PATCH = 3;
-    public static final int OPERATION_QUERY_TEST_BY_IMAGE = 4;
+    public static final int OPERATION_QUERY_TEST_BY_IMAGE_WITHOUT_SMC = 4;
+    public static final int OPERATION_QUERY_TEST_BY_IMAGE_WITH_SMC = 5;
 }

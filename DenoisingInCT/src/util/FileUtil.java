@@ -1,8 +1,37 @@
 package util;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileUtil {
+	
+	public static List<File> loadFileList(String dir) {
+		List<File> fileList = new ArrayList<File>();
+		
+		// add separator if the dir does not have it at the end
+		if (!dir.endsWith(File.separator)) {
+			dir = dir + File.separator;
+		}
+		File dirFile = new File(dir);
+
+		// if the dir does not exist or the type is not match
+		if (!dirFile.exists() || !dirFile.isDirectory()) {
+			System.out.println(dir + " does not exist");
+			return fileList;
+		}
+
+		File[] files = dirFile.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			// delete a single file
+			if (files[i].isFile()) {
+				
+				fileList.add(files[i]);
+			}
+		}
+
+		return fileList;
+	}
 
 	public static boolean deleteFile(String fileName) {
 		File file = new File(fileName);

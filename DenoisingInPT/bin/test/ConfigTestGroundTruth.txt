@@ -1,0 +1,24 @@
+
+testImageName = test2
+
+step = 9
+
+overlap = 2
+
+sigma = 10
+
+k = 0.35
+
+rootPath = /Users/cuihelei/Desktop/denoisingTest/
+
+dbPatchPath = dbPatches/
+
+queryPatchPath = queryPatches/
+
+queryImagePath = grayQuery/
+
+oriImagePath = grayQueryOri/
+
+outputPath = out/
+
+numOfThread = 2

@@ -80,7 +80,7 @@ public class TestgroundtruthOpt {
 		//int sigma = Integer.parseInt(subStrs[1]);
 		int threshold = (int)(1.126 * 1.126 * step * step * sigma * sigma);//Integer.parseInt(subStrs[2]);
 		
-		System.out.println("System parameters:\nsigma = " + sigma + "\nthreshold = " + threshold);
+		System.out.println("System parameters:\ntopK = " + topK + "\nsigma = " + sigma + "\nthreshold = " + threshold + "\nk = " + k);
 		
 		// Start reading db and query patches
 		Map<Integer, Patch> dbPatchesList = Tools.readPatches(dbPatchPath);
@@ -133,6 +133,8 @@ public class TestgroundtruthOpt {
 		double psnr1 = Tools.psnr(oriImageMat, newImageMat);
 		
 		double psnr2 = Tools.psnr(oriImageMat, queryImageMat);
+		
+		System.out.println("System parameters:\ntopK = " + topK + "\nsigma = " + sigma + "\nthreshold = " + threshold + "\nk = " + k);
 		
 		System.out.println("\nPSNR between original and new = " + psnr1);
 		System.out.println("\nPSNR between original and query = " + psnr2);

@@ -1,0 +1,30 @@
+
+lshL = 10
+
+limitNum = 200000
+
+rootPath = C:\Users\Helei\Desktop\cloudTest\
+
+dbFilePath = dbPatchesLSH/
+
+queryFilePath = queryPatchesLSH/
+
+queryImagePath = grayQuery/
+
+oriImagePath = grayQueryOri/
+
+outputPath = out/
+
+keyV = harry
+
+keyR = cityu
+
+numOfThread = 2
+
+step = 9
+
+overlap = 1
+
+sigma = 10
+
+k = 0.35

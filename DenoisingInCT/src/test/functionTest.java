@@ -1,11 +1,11 @@
 package test;
 
+import java.security.Key;
+
 import util.AESCoder;
 import util.BaseTool;
 import util.MathTool;
 import util.PRF;
-
-import java.security.Key;
 
 /**
  * Created by HarryC on 8/5/14.
@@ -54,7 +54,7 @@ public class functionTest {
 
         ////////////////////////// 2014-6-20
 
-        byte[] key = AESCoder.initSecretKey();
+        //byte[] key = AESCoder.initSecretKey();
 
         Key k = AESCoder.toKey(PRF.SHA256("cityu", 64).getBytes());
 

@@ -167,7 +167,8 @@ public class AESCoder {
         return cipher.doFinal(data);
     }
 
-    private static String showByteArray(byte[] data) {
+    @SuppressWarnings("unused")
+	private static String showByteArray(byte[] data) {
         if (null == data) {
             return null;
         }

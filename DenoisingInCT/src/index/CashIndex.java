@@ -1,13 +1,17 @@
 package index;
 
-import util.PRF;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import base.CashDigest;
 import base.LSHVector;
-import thread.MyCountDown;
-import thread.OnePatchQueryThread;
+import util.PRF;
 
 /**
  *
@@ -15,96 +19,107 @@ import thread.OnePatchQueryThread;
  */
 public class CashIndex {
 
-    private int L;
+	private int L;
 
-    public static HashMap<Long, Integer> staticIndex;
+	public HashMap<Long, Integer> staticIndex;
 
-    public static HashMap<Long, Integer> dynamicIndex;
+	public HashMap<Long, Integer> dynamicIndex;
 
-    public static HashSet<Long> revidSet;
+	public HashSet<Long> revidSet;
 
-    private HashMap<Long, Long> maxC; // used to record the maximum c for each lsh tag;
+	private HashMap<Long, Long> maxC; // used to record the maximum c for each
+										// lsh tag;
 
-    public static HashMap<Integer, String> idMap;
-    
-    public static ConcurrentHashMap<Integer, Integer> tempPatchResult;
+	public HashMap<Integer, String> idMap;
 
-    public CashIndex(int limit, int L) {
+	//public HashMap<Integer, Integer> tempPatchResult;
 
-        this.L = L;
-        this.maxC = new HashMap<Long, Long>();
-        
-        CashIndex.idMap = new HashMap<Integer, String>(limit);
+	public CashIndex(CashIndex ci) {
 
-        CashIndex.staticIndex = new HashMap<Long, Integer>(limit);
-        CashIndex.dynamicIndex = new HashMap<Long, Integer>(limit);
-        CashIndex.revidSet = new HashSet<Long>();
-    }
+		this.L = ci.L;
+		this.maxC = new HashMap<Long, Long>(ci.maxC);
+		this.idMap = new HashMap<>(ci.idMap);
+		this.staticIndex = new HashMap<>(ci.staticIndex);
+		this.dynamicIndex = new HashMap<>(ci.dynamicIndex);
+		this.revidSet = new HashSet<>(ci.revidSet);
+	}
 
-    public void insert(LSHVector lshVector, String imageId, int fid, String keyV, String keyR) {
+	public CashIndex(int limit, int L) {
 
-        for (int i = 0; i < lshVector.getDimension(); ++i) {
+		this.L = L;
+		this.maxC = new HashMap<Long, Long>();
 
-            Long lshValue = lshVector.getLSHValueByIndex(i);
+		this.idMap = new HashMap<Integer, String>(limit);
 
-            long c = 0; // start from 0
+		this.staticIndex = new HashMap<Long, Integer>(limit);
+		this.dynamicIndex = new HashMap<Long, Integer>(limit);
+		this.revidSet = new HashSet<Long>();
+	}
 
-            // TODO: double check the connection method
-            long k1 = PRF.HMACSHA1ToUnsignedInt("1xx" + lshValue + "xx" + i, keyV);
-            //String k1 = 1 + "xx" + lshValue + "xx" + i;
-            //long k2 = Long.parseLong(2 + "00" + lshValue + "00" + i);
+	public void insert(LSHVector lshVector, String imageId, int fid, String keyV, String keyR) {
 
-            if (maxC.containsKey(k1)) {
+		for (int i = 0; i < lshVector.getDimension(); ++i) {
 
-                c = maxC.get(k1) + 1;
-                maxC.put(k1, c);
-            } else {
-                maxC.put(k1, 1L);
-            }
+			Long lshValue = lshVector.getLSHValueByIndex(i);
 
-            boolean successInsert = false;
+			long c = 0; // start from 0
 
-            while (!successInsert) {
+			// TODO: double check the connection method
+			long k1 = PRF.HMACSHA1ToUnsignedInt("1xx" + lshValue + "xx" + i, keyV);
+			// String k1 = 1 + "xx" + lshValue + "xx" + i;
+			// long k2 = Long.parseLong(2 + "00" + lshValue + "00" + i);
 
-                long a = serverPosition(k1, c);
+			if (maxC.containsKey(k1)) {
 
-                //long tag = Long.parseLong(c + "0000" + lshValue + "0" + i);
+				c = maxC.get(k1) + 1;
+				maxC.put(k1, c);
+			} else {
+				maxC.put(k1, 1L);
+			}
 
-                // if does not exist, directly insert
-                if (!staticIndex.containsKey(a)) {
-                    //System.out.println(a);
-                		staticIndex.put(a, fid);
+			boolean successInsert = false;
 
-                    idMap.put(fid, imageId);
+			while (!successInsert) {
 
-                    successInsert = true;
-                    maxC.put(k1, c);
-                }
+				long a = serverPosition(k1, c);
 
-                ++c;
-            }
-        }
-    }
+				// long tag = Long.parseLong(c + "0000" + lshValue + "0" + i);
 
-    public boolean dynamicAdd(long key, int value) {
+				// if does not exist, directly insert
+				if (!staticIndex.containsKey(a)) {
+					// System.out.println(a);
+					staticIndex.put(a, fid);
 
-        if (dynamicIndex.containsKey(key)) {
+					idMap.put(fid, imageId);
 
-            dynamicIndex.put(key, value);
+					successInsert = true;
+					maxC.put(k1, c);
+				}
 
-            return false;
-        } else {
+				++c;
+			}
+		}
+	}
 
-            dynamicIndex.put(key, value);
+	public boolean dynamicAdd(long key, int value) {
 
-            return true;
-        }
-    }
+		if (dynamicIndex.containsKey(key)) {
 
-    public void dynamicDel(long revid) {
+			dynamicIndex.put(key, value);
 
-        revidSet.add(revid);
-    }
+			return false;
+		} else {
+
+			dynamicIndex.put(key, value);
+
+			return true;
+		}
+	}
+
+	public void dynamicDel(long revid) {
+
+		revidSet.add(revid);
+	}
 
 	public HashMap<Integer, Integer> searchByOnePatch(LSHVector lshVector, String keyV, String keyR) {
 
@@ -126,142 +141,243 @@ public class CashIndex {
 		// <patch id, number of occurrence>
 		HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
 
-        // <pid, counter>
-     	tempPatchResult = new ConcurrentHashMap<Integer, Integer>();
+		// <pid, counter>
+		//tempPatchResult = new HashMap<Integer, Integer>();
 
-		// long timeFlag0 = System.currentTimeMillis();
+		for (CashDigest cd : digestInL) {
 
-		MyCountDown threadCounter = new MyCountDown(L);
+			long k1 = cd.getK1();
 
-		for (int i = 0; i < L; i++) {
+			long c = 0; // start from 0
 
-			OnePatchQueryThread t = new OnePatchQueryThread("Thread " + i, threadCounter, i, digestInL);
+			while (true) {
 
-			t.start();
+				long a = serverPosition(k1, c);
+				// if does not exist, directly insert
+				if (staticIndex.containsKey(a)) {
+
+					int pid = staticIndex.get(a);
+
+					long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(pid), Long.toString(k1)));
+
+					if (!revidSet.contains(revid)) {
+
+						synchronized (this) {
+
+							// CashIndex.featureRankArray[fid] =
+							// CashIndex.featureRankArray[fid] + 1;
+							if (result.containsKey(pid)) {
+								result.put(pid, result.get(pid) + 1);
+							} else {
+								result.put(pid, 1);
+							}
+						}
+					}
+				} else {
+					break;
+				}
+
+				++c;
+			}
+
+			// deal with the added table
+			c = 0; // start from 0
+
+			while (true) {
+
+				long a = serverPosition(k1, c);
+				// if does not exist, directly insert
+				if (dynamicIndex.containsKey(a)) {
+
+					int pid = dynamicIndex.get(a);
+
+					long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(pid), Long.toString(k1)));
+					if (!revidSet.contains(revid)) {
+
+						synchronized (this) {
+
+							// CashIndex.featureRankArray[fid] =
+							// CashIndex.featureRankArray[fid] + 1;
+							// CashIndex.featureRankArray[fid] =
+							// CashIndex.featureRankArray[fid] + 1;
+							if (result.containsKey(pid)) {
+								result.put(pid, result.get(pid) + 1);
+							} else {
+								result.put(pid, 1);
+							}
+						}
+					}
+				} else {
+					break;
+				}
+
+				++c;
+			}
 		}
-
-		// wait for all threads done
-		while (true) {
-			if (!threadCounter.hasNext())
-				break;
-		}
-		
-		result.putAll(tempPatchResult);
-
-		tempPatchResult.clear();
-		tempPatchResult = null;
 
 		System.out.println("Query patch at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
 
 		return result;
 	}
 
-    public List<Integer> rankFeature(int threshold, HashMap<Integer, Integer> featureRank) {
+	/*
+	 * public HashMap<Integer, Integer> searchByOnePatch(LSHVector lshVector,
+	 * String keyV, String keyR) {
+	 * 
+	 * 
+	 * // Step 1: generate digests on client long timeFlag1 =
+	 * System.currentTimeMillis();
+	 * 
+	 * List<CashDigest> digestInL = new ArrayList<CashDigest>(L);
+	 * 
+	 * for (int i = 0; i < lshVector.getDimension(); ++i) {
+	 * 
+	 * digestInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV,
+	 * keyR)); }
+	 * 
+	 * System.out.println("Client side digest generate cost: " +
+	 * (System.currentTimeMillis() - timeFlag1) + "ms.");
+	 * 
+	 * // Step 2: search on server side long timeFlag2 =
+	 * System.currentTimeMillis();
+	 * 
+	 * // <patch id, number of occurrence> HashMap<Integer, Integer> result =
+	 * new HashMap<Integer, Integer>();
+	 * 
+	 * // <pid, counter> tempPatchResult = new ConcurrentHashMap<Integer,
+	 * Integer>();
+	 * 
+	 * // long timeFlag0 = System.currentTimeMillis();
+	 * 
+	 * MyCountDown threadCounter = new MyCountDown(L);
+	 * 
+	 * for (int i = 0; i < L; i++) {
+	 * 
+	 * OnePatchQueryThread t = new OnePatchQueryThread("Thread " + i,
+	 * threadCounter, i, digestInL, tempPatchResult, staticIndex, dynamicIndex,
+	 * revidSet);
+	 * 
+	 * t.start(); }
+	 * 
+	 * // wait for all threads done while (true) { if (!threadCounter.hasNext())
+	 * break; }
+	 * 
+	 * result.putAll(tempPatchResult);
+	 * 
+	 * tempPatchResult.clear(); tempPatchResult = null;
+	 * 
+	 * System.out.println("Query patch at server cost: " +
+	 * (System.currentTimeMillis() - timeFlag2) + "ms");
+	 * 
+	 * return result; }
+	 */
 
-        List<Integer> result = new ArrayList<Integer>();
+	public List<Integer> rankFeature(int threshold, HashMap<Integer, Integer> featureRank) {
 
-        List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
+		List<Integer> result = new ArrayList<Integer>();
 
-        // æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
-        list.addAll(featureRank.entrySet());
+		List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
 
+		// æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
+		list.addAll(featureRank.entrySet());
 
-        /*
-        for (Iterator<Map.Entry<Integer, Integer>> it = featureRank.entrySet().iterator(); it.hasNext(); ) {
+		/*
+		 * for (Iterator<Map.Entry<Integer, Integer>> it =
+		 * featureRank.entrySet().iterator(); it.hasNext(); ) {
+		 * 
+		 * Map.Entry<Integer, Integer> tmp = it.next();
+		 * 
+		 * if (tmp.getValue() >= threshold) {
+		 * 
+		 * list.add(tmp); } }
+		 */
 
-            Map.Entry<Integer, Integer> tmp = it.next();
+		// è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
+		CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
+		// å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
+		Collections.sort(list, mc);
 
-            if (tmp.getValue() >= threshold) {
+		// é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
+		for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext();) {
 
-                list.add(tmp);
-            }
-        }*/
+			// Map.Entry<Integer, Integer> tmp = it.next();
 
-        // è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
-        CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
-        // å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
-        Collections.sort(list, mc);
+			// if (tmp.getValue() >= threshold) {
 
-        // é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
-        for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext(); ) {
+			// System.out.println("fid = " + tmp.getKey() + ", iid = " +
+			// idMap.get(tmp.getKey()) + ", counter = " + tmp.getValue());
+			// System.out.println(tmp.getKey());
+			result.add(it.next().getKey());
+			// }
+		}
 
-            //Map.Entry<Integer, Integer> tmp = it.next();
+		return result;
+	}
 
-            //if (tmp.getValue() >= threshold) {
+	public static List<String> topK(int topK, HashMap<String, Integer> cc) {
 
-            //System.out.println("fid = " + tmp.getKey() + ", iid = " + idMap.get(tmp.getKey()) + ", counter = " + tmp.getValue());
-            //System.out.println(tmp.getKey());
-            result.add(it.next().getKey());
-            //}
-        }
+		List<String> result = new ArrayList<String>();
 
-        return result;
-    }
+		List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>();
+		// æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
+		list.addAll(cc.entrySet());
+		// è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
+		CashIndex.StringValueComparator mc = new StringValueComparator();
+		// å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
+		Collections.sort(list, mc);
 
-    public static List<String> topK(int topK, HashMap<String, Integer> cc) {
+		// é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
+		for (Iterator<Map.Entry<String, Integer>> it = list.iterator(); it.hasNext();) {
 
-        List<String> result = new ArrayList<String>();
+			result.add(it.next().getKey());
 
-        List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>();
-        // æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
-        list.addAll(cc.entrySet());
-        // è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
-        CashIndex.StringValueComparator mc = new StringValueComparator();
-        // å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
-        Collections.sort(list, mc);
+			if (--topK <= 0) {
+				break;
+			}
+		}
 
-        // é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
-        for (Iterator<Map.Entry<String, Integer>> it = list.iterator(); it.hasNext(); ) {
+		return result;
+	}
 
-            result.add(it.next().getKey());
+	public static List<Integer> topKPatches(int topK, HashMap<Integer, Integer> cc) {
 
-            if (--topK <= 0) {
-                break;
-            }
-        }
+		List<Integer> result = new ArrayList<Integer>();
 
-        return result;
-    }
-    
-    public static List<Integer> topKPatches(int topK, HashMap<Integer, Integer> cc) {
+		List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
+		// æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
+		list.addAll(cc.entrySet());
+		// è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
+		CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
+		// å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
+		Collections.sort(list, mc);
 
-        List<Integer> result = new ArrayList<Integer>();
+		// é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
+		for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext();) {
 
-        List<Map.Entry<Integer, Integer>> list = new ArrayList<Map.Entry<Integer, Integer>>();
-        // æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
-        list.addAll(cc.entrySet());
-        // è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
-        CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
-        // å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
-        Collections.sort(list, mc);
+			result.add(it.next().getKey());
 
-        // é��åŽ†åœ¨listä¸­æŽ’åº�ä¹‹å�Žçš„HashMap
-        for (Iterator<Map.Entry<Integer, Integer>> it = list.iterator(); it.hasNext(); ) {
+			if (--topK <= 0) {
+				break;
+			}
+		}
 
-            result.add(it.next().getKey());
+		return result;
+	}
 
-            if (--topK <= 0) {
-                break;
-            }
-        }
+	private static class StringValueComparator implements Comparator<Map.Entry<String, Integer>> {
+		public int compare(Map.Entry<String, Integer> m, Map.Entry<String, Integer> n) {
+			return (int) (n.getValue() - m.getValue());
+		}
+	}
 
-        return result;
-    }
+	private static class IntegerValueComparator implements Comparator<Map.Entry<Integer, Integer>> {
+		public int compare(Map.Entry<Integer, Integer> m, Map.Entry<Integer, Integer> n) {
+			return (int) (n.getValue() - m.getValue());
+		}
+	}
 
-    private static class StringValueComparator implements Comparator<Map.Entry<String, Integer>> {
-        public int compare(Map.Entry<String, Integer> m, Map.Entry<String, Integer> n) {
-            return (int) (n.getValue() - m.getValue());
-        }
-    }
+	private int serverPosition(long k1Vj, long counter) {
 
-    private static class IntegerValueComparator implements Comparator<Map.Entry<Integer, Integer>> {
-        public int compare(Map.Entry<Integer, Integer> m, Map.Entry<Integer, Integer> n) {
-            return (int) (n.getValue() - m.getValue());
-        }
-    }
-
-    private int serverPosition(long k1Vj, long counter) {
-
-        return (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(counter), Long.toString(k1Vj)));
-    }
+		return (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(counter), Long.toString(k1Vj)));
+	}
 }

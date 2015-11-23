@@ -1,0 +1,32 @@
+
+lshL = 10
+
+limitNum = 200000
+
+rootPath = /Users/cuihelei/Desktop/cloudTest/
+
+dbFilePath = dbPatchesLSH/
+
+queryFilePath = queryPatchesLSH/
+
+queryImagePath = grayQuery/
+
+oriImagePath = grayQueryOri/
+
+outputPath = out/
+
+keyV = harry
+
+keyR = cityu
+
+numOfThread = 4
+
+step = 9
+
+overlap = 1
+
+sigma = 10
+
+k = 0.35
+
+isShowImage = false

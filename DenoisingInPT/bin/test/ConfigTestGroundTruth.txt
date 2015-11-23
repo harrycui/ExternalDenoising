@@ -3,7 +3,7 @@ testImageName = test2
 
 step = 9
 
-overlap = 2
+overlap = 1
 
 sigma = 10
 
@@ -22,3 +22,6 @@ oriImagePath = grayQueryOri/
 outputPath = out/
 
 numOfThread = 2
+
+# the number of candidate
+topK = 1

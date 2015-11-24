@@ -45,7 +45,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
         this.queryPatches = queryPatches;
         this.patches = patches;
         
-        this.cashIndex = new CashIndex(cashIndex);
+        this.cashIndex = cashIndex;
         this.rawDBPatchMap = new HashMap<Integer, Patch>(rawDBPatchMap);
     }
 

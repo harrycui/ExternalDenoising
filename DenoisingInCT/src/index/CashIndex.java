@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import base.CashDigest;
 import base.LSHVector;
@@ -23,20 +24,20 @@ public class CashIndex {
 
 	private int L;
 
-	public HashMap<Long, Integer> staticIndex;
+	public ConcurrentHashMap<Long, Integer> staticIndex;
 
-	public HashMap<Long, Integer> dynamicIndex;
+	public ConcurrentHashMap<Long, Integer> dynamicIndex;
 
 	public HashSet<Long> revidSet;
 
-	private HashMap<Long, Long> maxC; // used to record the maximum c for each
+	private ConcurrentHashMap<Long, Long> maxC; // used to record the maximum c for each
 										// lsh tag;
 
-	public HashMap<Integer, String> idMap;
+	public ConcurrentHashMap<Integer, String> idMap;
 
 	//public HashMap<Integer, Integer> tempPatchResult;
 
-	public CashIndex(CashIndex ci) {
+	/*public CashIndex(CashIndex ci) {
 
 		this.L = ci.L;
 		this.maxC = new HashMap<Long, Long>(ci.maxC);
@@ -44,17 +45,17 @@ public class CashIndex {
 		this.staticIndex = new HashMap<>(ci.staticIndex);
 		this.dynamicIndex = new HashMap<>(ci.dynamicIndex);
 		this.revidSet = new HashSet<>(ci.revidSet);
-	}
+	}*/
 
 	public CashIndex(int limit, int L) {
 
 		this.L = L;
-		this.maxC = new HashMap<Long, Long>();
+		this.maxC = new ConcurrentHashMap<Long, Long>();
 
-		this.idMap = new HashMap<Integer, String>(limit);
+		this.idMap = new ConcurrentHashMap<Integer, String>(limit);
 
-		this.staticIndex = new HashMap<Long, Integer>(limit);
-		this.dynamicIndex = new HashMap<Long, Integer>(limit);
+		this.staticIndex = new ConcurrentHashMap<Long, Integer>(limit);
+		this.dynamicIndex = new ConcurrentHashMap<Long, Integer>(limit);
 		this.revidSet = new HashSet<Long>();
 	}
 

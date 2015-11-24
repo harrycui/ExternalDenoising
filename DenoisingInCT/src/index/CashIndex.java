@@ -8,9 +8,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import base.CashDigest;
 import base.LSHVector;
+import base.MyTreemapComparator;
 import util.PRF;
 
 /**
@@ -121,7 +123,7 @@ public class CashIndex {
 		revidSet.add(revid);
 	}
 
-	public HashMap<Integer, Integer> searchByOnePatch(LSHVector lshVector, String keyV, String keyR) {
+	public TreeMap<Integer, List<Integer>> searchByOnePatch(LSHVector lshVector, String keyV, String keyR) {
 
 		// Step 1: generate digests on client
 		long timeFlag1 = System.currentTimeMillis();
@@ -138,11 +140,8 @@ public class CashIndex {
 		// Step 2: search on server side
 		long timeFlag2 = System.currentTimeMillis();
 
-		// <patch id, number of occurrence>
-		HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
-
-		// <pid, counter>
-		//tempPatchResult = new HashMap<Integer, Integer>();
+		//// <patch id, number of occurrence>
+		HashMap<Integer, Integer> tempResult = new HashMap<Integer, Integer>();
 
 		for (CashDigest cd : digestInL) {
 
@@ -166,10 +165,10 @@ public class CashIndex {
 
 							// CashIndex.featureRankArray[fid] =
 							// CashIndex.featureRankArray[fid] + 1;
-							if (result.containsKey(pid)) {
-								result.put(pid, result.get(pid) + 1);
+							if (tempResult.containsKey(pid)) {
+								tempResult.put(pid, tempResult.get(pid) + 1);
 							} else {
-								result.put(pid, 1);
+								tempResult.put(pid, 1);
 							}
 						}
 					}
@@ -200,10 +199,10 @@ public class CashIndex {
 							// CashIndex.featureRankArray[fid] + 1;
 							// CashIndex.featureRankArray[fid] =
 							// CashIndex.featureRankArray[fid] + 1;
-							if (result.containsKey(pid)) {
-								result.put(pid, result.get(pid) + 1);
+							if (tempResult.containsKey(pid)) {
+								tempResult.put(pid, tempResult.get(pid) + 1);
 							} else {
-								result.put(pid, 1);
+								tempResult.put(pid, 1);
 							}
 						}
 					}
@@ -212,6 +211,28 @@ public class CashIndex {
 				}
 
 				++c;
+			}
+		}
+		
+		// key - lsh occurrence, value - pid list
+		TreeMap<Integer, List<Integer>> result = new TreeMap<Integer, List<Integer>>(new MyTreemapComparator());
+		
+		Iterator<Map.Entry<Integer, Integer>> entries = tempResult.entrySet().iterator();
+
+		while (entries.hasNext()) {
+
+		    Map.Entry<Integer, Integer> entry = entries.next();
+		    
+		    if (result.containsKey(entry.getValue())) {
+				
+		    	result.get(entry.getValue()).add(entry.getKey());
+			} else {
+
+				List<Integer> patchList = new ArrayList<Integer>();
+				
+				patchList.add(entry.getKey());
+
+				result.put(entry.getValue(), patchList);
 			}
 		}
 

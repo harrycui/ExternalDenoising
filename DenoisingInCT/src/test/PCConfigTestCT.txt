@@ -19,7 +19,7 @@ keyV = harry
 
 keyR = cityu
 
-numOfThread = 2
+numOfThread = 4
 
 step = 9
 
@@ -28,3 +28,5 @@ overlap = 1
 sigma = 10
 
 k = 0.35
+
+isShowImage = false

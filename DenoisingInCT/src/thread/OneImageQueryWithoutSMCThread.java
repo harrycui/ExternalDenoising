@@ -2,8 +2,10 @@ package thread;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import base.LSHVector;
 import base.Patch;
@@ -57,20 +59,37 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 
 			LSHVector lshVector = new LSHVector(1, qp.getLshValues(), lshL);
 
-			HashMap<Integer, Integer> searchResult = cashIndex.searchByOnePatch(lshVector, keyV, keyR);
+			TreeMap<Integer, List<Integer>> searchResult = cashIndex.searchByOnePatch(lshVector, keyV, keyR);
 			
 			List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(topK);
 			
 			if (searchResult != null && searchResult.size() > 0) {
 				
-				List<Integer> topKId = CashIndex.topKPatches(topK, searchResult);
+				Iterator<Map.Entry<Integer, List<Integer>>> entries = searchResult.entrySet().iterator();
 
-				for (Integer id : topKId) {
+				boolean isFullForOnePatch = false;
+				while (entries.hasNext()) {
 
-					//System.out.println(" " + id + " - " + searchResult.get(id));
-					similarPatchesForOnePatch.add(rawDBPatchMap.get(id));
+				    Map.Entry<Integer, List<Integer>> entry = entries.next();
+				    
+				    for (int j = 0; j < entry.getValue().size(); j++) {
+				    	
+				    	int pid = entry.getValue().get(j);
+				    	
+				    	//System.out.println(" " + pid + " - " + entry.getKey());
+				    	
+						similarPatchesForOnePatch.add(rawDBPatchMap.get(pid));
+						
+						if (similarPatchesForOnePatch.size() >= topK) {
+							isFullForOnePatch = true;
+							break;
+						}
+					}
+				    
+				    if (isFullForOnePatch) {
+						break;
+					}
 				}
-				
 			}
 			
 			SimilarPatches sp = new SimilarPatches(i, qp, similarPatchesForOnePatch);

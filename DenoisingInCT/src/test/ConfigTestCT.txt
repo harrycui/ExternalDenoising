@@ -1,9 +1,9 @@
 
 lshL = 10
 
-limitNum = 200000
+limitNum = 200
 
-rootPath = /Users/cuihelei/Desktop/cloudTest/
+rootPath = /Users/cuihelei/Desktop/cloudTest/data/
 
 dbFilePath = dbPatchesLSH/
 

@@ -136,7 +136,7 @@ public class CashIndex {
 			digestInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
 		}
 
-		System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
+		//System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
 
 		// Step 2: search on server side
 		long timeFlag2 = System.currentTimeMillis();
@@ -237,7 +237,7 @@ public class CashIndex {
 			}
 		}
 
-		System.out.println("Query patch at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
+		//System.out.println("Query patch at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
 
 		return result;
 	}

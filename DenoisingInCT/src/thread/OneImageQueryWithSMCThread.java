@@ -107,7 +107,7 @@ public class OneImageQueryWithSMCThread extends Thread {
 			
 			patches.add(sp);
 
-			System.out.println("Patch No. " + (i + 1) + " is done.");
+			//System.out.println("Patch No. " + (i + 1) + " is done.");
 		}
 
 		System.out.println(this.getName() + " is finished.");

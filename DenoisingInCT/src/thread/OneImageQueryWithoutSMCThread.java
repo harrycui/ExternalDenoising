@@ -50,7 +50,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
     }
 
 	public void run() {
-
+		
 		//List<SimilarPatches> patches = new ArrayList<SimilarPatches>(queryPatches.size());
 		
 		for (int i = 0; i < queryPatches.size(); i++) {
@@ -96,7 +96,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 			
 			patches.add(sp);
 
-			System.out.println("Patch No. " + (i + 1) + " is done.");
+			//System.out.println("Patch No. " + (i + 1) + " is done.");
 		}
 
 		System.out.println(this.getName() + " is finished.");

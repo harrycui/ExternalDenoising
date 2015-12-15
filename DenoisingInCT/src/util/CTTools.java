@@ -440,8 +440,6 @@ public class CTTools {
 						endIndex = qi.getPatches().size() - 1;
 					}
 					
-					System.out.println("[" + startIndex + ", " + endIndex + "]");
-					
 					List<SimilarPatches> resultInOneThread = new ArrayList<SimilarPatches>(endIndex - startIndex + 1);
 					
 					result.add(resultInOneThread);
@@ -451,6 +449,8 @@ public class CTTools {
 					OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread);
 					
 					t.start();
+					
+					System.out.println("Thread-" + (i + 1) + " is running... -> [" + startIndex + ", " + endIndex + "]");
 				}
 				
 				while (true) {
@@ -501,7 +501,7 @@ public class CTTools {
 
 				System.out.println("\n\nSearching time is " + (stopTime1 - startTime) + " ms");
 				
-				prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, isShowImage);
+				prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath+"/withoutSMC_", isShowImage);
 				
 			}
 		}
@@ -536,7 +536,11 @@ public class CTTools {
 		// resize to original size
 		Imgproc.resize(newImageMat, newImageMat, new Size(oriImageMat.cols(), oriImageMat.rows()));
 		
-		String outputFilePath = outputPath + "rec_" + queryImageName;
+		double psnr1 = Tools.psnr(oriImageMat, newImageMat);
+		
+		double psnr2 = Tools.psnr(oriImageMat, queryImageMat);
+		
+		String outputFilePath = outputPath + queryImageName.substring(0, queryImageName.lastIndexOf('.')) + "_Ori_" + String.format("%.4f", psnr2) + "_Rec_" + String.format("%.4f", psnr1) + ".jpg";
 		
 		File file = new File(outputFilePath);
 		
@@ -563,9 +567,7 @@ public class CTTools {
 			im3.showImage(newImageMat);
 		}
 		
-		double psnr1 = Tools.psnr(oriImageMat, newImageMat);
 		
-		double psnr2 = Tools.psnr(oriImageMat, queryImageMat);
 		
 		System.out.println("System parameters:\ntopK = " + topK + "\nsigma = " + sigma + "\nthreshold = " + threshold + "\nk = " + k);
 		
@@ -786,8 +788,236 @@ public class CTTools {
 
 				System.out.println("\n\nSearching time is " + (stopTime1 - startTime) + " ms");
 				
-				prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, isShowImage);
+				prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath+"/withSMC_", isShowImage);
 				
+			}
+		}
+	}
+
+	public static void queryByOneImageWithoutSMCBatch(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage) {
+
+		System.out.println("\nModel: batch query by images without smc.");
+
+		if (!DenoisingPhaseOneTest.isQueryImagesLoaded || !DenoisingPhaseOneTest.isRawDataLoaded) {
+
+			System.out.println("Warning: Please load the query images or raw data first.");
+		} else {
+
+			System.out
+					.println("First, please indicate the top-k number: (-1 means return to root menu)");
+
+			int topK = 0;
+			
+			boolean returnToRoot = false;
+			
+			while (true) {
+				
+				String inputStr = null;
+
+				try {
+					inputStr = br.readLine();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				try {
+					if (inputStr == null || inputStr.equals("-1")) {
+
+						System.out.println("Return to root menu!");
+						returnToRoot = true;
+						break;
+					} else {
+						
+						topK = Integer.parseInt(inputStr);
+
+						System.out.println("The top-k is : " + topK);
+						
+						break;
+					}
+				} catch (NumberFormatException e) {
+					System.out.println("Warning: please input again.");
+					continue;
+				}
+			}
+			
+			if (!returnToRoot) {
+
+				int numOfImages = DenoisingPhaseOneTest.queryImages.size();
+
+				for (int queryIndex = 1; queryIndex <= numOfImages; ++queryIndex) {
+
+					QueryImage qi = DenoisingPhaseOneTest.queryImages.get(queryIndex - 1);
+
+					System.out.println("\nWithout SMC: Start processing image: " + qi.getName() + " -->> " + queryIndex + "/" + numOfImages);
+
+					List<List<SimilarPatches>> result = new ArrayList<List<SimilarPatches>>(numOfThread);
+
+					MyCountDown threadCounter = new MyCountDown(numOfThread);
+
+					int numOfTimesInOneThread = qi.getPatches().size() / numOfThread;
+
+					for (int i = 0; i < numOfThread; ++i) {
+
+						List<PatchWithLSH> queryPatchesInThread = new ArrayList<PatchWithLSH>();
+
+						int startIndex = i * numOfTimesInOneThread;
+
+						int endIndex = (i + 1) * numOfTimesInOneThread - 1;
+
+						if (i == numOfThread - 1) {
+
+							endIndex = qi.getPatches().size() - 1;
+						}
+
+						List<SimilarPatches> resultInOneThread = new ArrayList<SimilarPatches>(
+								endIndex - startIndex + 1);
+
+						result.add(resultInOneThread);
+
+						queryPatchesInThread.addAll(qi.getPatches().subList(startIndex, endIndex + 1));
+
+						OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1),
+								threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread,
+								DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap,
+								resultInOneThread);
+
+						t.start();
+
+						System.out.println(
+								"Thread-" + (i + 1) + " is running... -> [" + startIndex + ", " + endIndex + "]");
+					}
+
+					while (true) {
+						if (!threadCounter.hasNext())
+							break;
+					}
+
+					List<SimilarPatches> patches = new ArrayList<SimilarPatches>(qi.getPatches().size());
+
+					for (int i = 0; i < numOfThread; ++i) {
+
+						patches.addAll(result.get(i));
+					}
+
+					prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath,
+							oriImagePath, outputPath+"/withoutSMC_", isShowImage);
+				}
+
+				System.out.println("\nAll done.");
+			}
+		}
+	}
+	
+	public static void queryByOneImageWithSMCBatch(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage) {
+
+		System.out.println("\nModel: query by one image with smc.");
+
+		if (!DenoisingPhaseOneTest.isQueryImagesLoaded || !DenoisingPhaseOneTest.isRawDataLoaded) {
+
+			System.out.println("Warning: Please load the query images or raw data first.");
+		} else {
+
+			System.out
+					.println("First, please indicate the top-k number: (-1 means return to root menu)");
+
+			int topK = 0;
+			
+			boolean returnToRoot = false;
+			
+			while (true) {
+				
+				String inputStr = null;
+
+				try {
+					inputStr = br.readLine();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				try {
+					if (inputStr == null || inputStr.equals("-1")) {
+
+						System.out.println("Return to root menu!");
+						returnToRoot = true;
+						break;
+					} else {
+						
+						topK = Integer.parseInt(inputStr);
+
+						System.out.println("The top-k is : " + topK);
+						
+						break;
+					}
+				} catch (NumberFormatException e) {
+					System.out.println("Warning: please input again.");
+					continue;
+				}
+			}
+			
+			if (!returnToRoot) {
+
+				int numOfImages = DenoisingPhaseOneTest.queryImages.size();
+
+				for (int queryIndex = 1; queryIndex <= numOfImages; ++queryIndex) {
+
+					QueryImage qi = DenoisingPhaseOneTest.queryImages.get(queryIndex - 1);
+
+					System.out.println("\nWith SMC: Start processing image: " + qi.getName() + " -->> " + queryIndex + "/" + numOfImages);
+
+					int threshold = (int) (1.126 * 1.126 * step * step * sigma * sigma);
+
+					List<List<SimilarPatches>> result = new ArrayList<List<SimilarPatches>>(numOfThread);
+
+					MyCountDown threadCounter = new MyCountDown(numOfThread);
+
+					int numOfTimesInOneThread = qi.getPatches().size() / numOfThread;
+
+					for (int i = 0; i < numOfThread; ++i) {
+
+						List<PatchWithLSH> queryPatchesInThread = new ArrayList<PatchWithLSH>();
+
+						int startIndex = i * numOfTimesInOneThread;
+
+						int endIndex = (i + 1) * numOfTimesInOneThread - 1;
+
+						if (i == numOfThread - 1) {
+
+							endIndex = qi.getPatches().size() - 1;
+						}
+
+						System.out.println("[" + startIndex + ", " + endIndex + "]");
+
+						List<SimilarPatches> resultInOneThread = new ArrayList<SimilarPatches>(
+								endIndex - startIndex + 1);
+
+						result.add(resultInOneThread);
+
+						queryPatchesInThread.addAll(qi.getPatches().subList(startIndex, endIndex + 1));
+
+						OneImageQueryWithSMCThread t = new OneImageQueryWithSMCThread("Thread-" + (i + 1),
+								threadCounter, lshL, keyV, keyR, topK, threshold, queryPatchesInThread,
+								DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap,
+								resultInOneThread);
+
+						t.start();
+					}
+
+					while (true) {
+						if (!threadCounter.hasNext())
+							break;
+					}
+
+					List<SimilarPatches> patches = new ArrayList<SimilarPatches>(qi.getPatches().size());
+
+					for (int i = 0; i < numOfThread; ++i) {
+
+						patches.addAll(result.get(i));
+					}
+
+					prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath,
+							oriImagePath, outputPath+"/withSMC_", isShowImage);
+
+				}
 			}
 		}
 	}

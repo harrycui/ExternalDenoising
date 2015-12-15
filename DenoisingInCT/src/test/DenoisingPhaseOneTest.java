@@ -325,6 +325,8 @@ public class DenoisingPhaseOneTest {
 					+ "[4] query test by one patch (thread num = L) with smc;\n"
 					+ "[5] simulate query test by one image (thread num = L) without smc;\n" 
 					+ "[6] simulate query test by one image (thread num = L) with smc;\n" 
+					+ "[7] batch simulate query test by one image (thread num = L) without smc;\n" 
+					+ "[8] batch simulate query test by one image (thread num = L) with smc;\n"
 					+ "[QUIT] quit system.\n\n" + "--->");
 			
 			String inputStr;
@@ -339,16 +341,16 @@ public class DenoisingPhaseOneTest {
 						System.out.println("Quit!");
 
 						break;
-					} else if (Integer.parseInt(inputStr) > 6 || Integer.parseInt(inputStr) < 1) {
+					} else if (Integer.parseInt(inputStr) > 8 || Integer.parseInt(inputStr) < 1) {
 
-						System.out.println("Warning: operation type should be limited in [1, 6], please try again!");
+						System.out.println("Warning: operation type should be limited in [1, 8], please try again!");
 
 						continue;
 					} else {
 						operationType = Integer.parseInt(inputStr);
 					}
 				} catch (NumberFormatException e) {
-					System.out.println("Warning: operation type should be limited in [1, 6], please try again!");
+					System.out.println("Warning: operation type should be limited in [1, 8], please try again!");
 					continue;
 				}
 
@@ -378,6 +380,12 @@ public class DenoisingPhaseOneTest {
 				break;
 			case Constant.OPERATION_QUERY_TEST_BY_IMAGE_WITH_SMC:
 				CTTools.queryByOneImageWithSMC(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
+				break;
+			case Constant.OPERATION_BATCH_QUERY_TEST_BY_IMAGE_WITHOUT_SMC:
+				CTTools.queryByOneImageWithoutSMCBatch(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
+				break;
+			case Constant.OPERATION_BATCH_QUERY_TEST_BY_IMAGE_WITH_SMC:
+				CTTools.queryByOneImageWithSMCBatch(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
 				break;
 			}
 		}

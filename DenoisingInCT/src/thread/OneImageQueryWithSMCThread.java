@@ -12,6 +12,7 @@ import base.Patch;
 import base.PatchWithLSH;
 import base.SimilarPatches;
 import index.CashIndex;
+import index.SecureCashIndex;
 import test.DenoisingPhaseOneTest;
 import util.Tools;
 
@@ -31,13 +32,13 @@ public class OneImageQueryWithSMCThread extends Thread {
 	
 	private List<PatchWithLSH> queryPatches;
 	
-	private CashIndex cashIndex;
+	private SecureCashIndex cashIndex;
 	
 	private Map<Integer, Patch> rawDBPatchMap;
 	
 	private List<SimilarPatches> patches;
 
-	public OneImageQueryWithSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, int threshold, List<PatchWithLSH> queryPatches, CashIndex cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches) {
+	public OneImageQueryWithSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, int threshold, List<PatchWithLSH> queryPatches, SecureCashIndex cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches) {
 
         super(threadName);
 

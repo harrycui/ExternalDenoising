@@ -18,6 +18,7 @@ import base.Patch;
 import base.PatchWithLSH;
 import base.QueryImage;
 import index.CashIndex;
+import index.SecureCashIndex;
 import util.CTTools;
 import util.ConfigParser;
 import util.FileUtil;
@@ -36,7 +37,7 @@ public class DenoisingPhaseOneTest {
 
 	public static boolean isRawDataLoaded = false;
 
-	public static CashIndex cashIndex;
+	public static SecureCashIndex cashIndex;
 
 	public static List<QueryImage> queryImages;
 
@@ -45,7 +46,7 @@ public class DenoisingPhaseOneTest {
 
 	public static void buildIndex(String dbFilePath, short lshL, int limitNum, String keyV, String keyR) {
 
-		cashIndex = new CashIndex(limitNum * lshL, lshL);
+		cashIndex = new SecureCashIndex(limitNum * lshL, lshL);
 
 		BufferedReader reader = null;
 

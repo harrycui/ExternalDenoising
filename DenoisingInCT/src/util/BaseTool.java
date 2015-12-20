@@ -76,6 +76,29 @@ public class BaseTool {
 
         return result;
     }
+    
+    /**
+     * @param data the original data
+     * @return long
+     */
+    public static long flod160Bytes(byte[] data) {
+
+        long result = 0;
+
+        if (data.length == 20) {
+
+            byte[][] bb = new byte[3][8];
+
+            for (int i = 0; i < data.length; ++i) {
+
+                bb[i / 8][i % 8] = data[i];
+            }
+
+            result = bytesToLong(bb[0]) ^ bytesToLong(bb[1]) ^ bytesToLong(bb[2]);
+        }
+
+        return result;
+    }
 
     /**
      * This function is used to locate the real data of an expanded id.

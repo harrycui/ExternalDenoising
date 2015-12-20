@@ -147,15 +147,15 @@ public class PRF {
 
             Charset asciiCs = Charset.forName("US-ASCII");
 
-            Mac sha128_HMAC = Mac.getInstance("HmacSHA1");
+            Mac sha1_HMAC = Mac.getInstance("HmacSHA1");
 
             SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA1");
 
-            sha128_HMAC.init(secretKey);
+            sha1_HMAC.init(secretKey);
 
-            sha128_HMAC.update(msg.getBytes());
+            sha1_HMAC.update(msg.getBytes());
 
-            digest = BaseTool.bytesToUnsignedInt(sha128_HMAC.doFinal());
+            digest = BaseTool.bytesToUnsignedInt(sha1_HMAC.doFinal());
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -179,6 +179,35 @@ public class PRF {
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
 
             SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA256");
+
+            sha256_HMAC.init(secretKey);
+
+            sha256_HMAC.update(msg.getBytes());
+
+            digest = sha256_HMAC.doFinal();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return digest;
+    }
+    
+    public static byte[] HMACSHA1(String msg, String key) {
+
+        byte[] digest;
+
+        try {
+
+            Charset asciiCs = Charset.forName("US-ASCII");
+
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA1");
+
+            SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA1");
 
             sha256_HMAC.init(secretKey);
 

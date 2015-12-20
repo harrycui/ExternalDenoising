@@ -27,7 +27,7 @@ import thread.OneImageQueryWithSMCThread;
 import thread.OneImageQueryWithoutSMCThread;
 
 public class CTTools {
-	public static void queryByOnePatchWithoutSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, int sigma) {
+	public static void queryByOnePatchWithoutSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, int sigma, boolean isShowTime) {
 
 		System.out.println("\nModel: query by one patch.");
 
@@ -123,7 +123,7 @@ public class CTTools {
 
 				LSHVector lshVector = new LSHVector(1, queryPatch.getLshValues(), lshL);
 
-				TreeMap<Integer, List<Integer>> searchResult = DenoisingPhaseOneTest.cashIndex.searchByOnePatch(lshVector, keyV, keyR);
+				TreeMap<Integer, List<Integer>> searchResult = DenoisingPhaseOneTest.cashIndex.searchByOnePatch(lshVector, keyV, keyR, isShowTime);
 
 				if (searchResult != null && searchResult.size() > 0) {
 					
@@ -176,7 +176,7 @@ public class CTTools {
 	}
 	
 
-	public static void queryByOnePatchWithSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, int sigma) {
+	public static void queryByOnePatchWithSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, int sigma, boolean isShowTime) {
 
 		System.out.println("\nModel: query by one patch.");
 
@@ -274,7 +274,7 @@ public class CTTools {
 
 				LSHVector lshVector = new LSHVector(1, queryPatch.getLshValues(), lshL);
 
-				TreeMap<Integer, List<Integer>> searchResult = DenoisingPhaseOneTest.cashIndex.searchByOnePatch(lshVector, keyV, keyR);
+				TreeMap<Integer, List<Integer>> searchResult = DenoisingPhaseOneTest.cashIndex.searchByOnePatch(lshVector, keyV, keyR, isShowTime);
 
 				if (searchResult != null && searchResult.size() > 0) {
 					
@@ -332,7 +332,7 @@ public class CTTools {
 		}
 	}
 
-	public static void queryByOneImageWithoutSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage) {
+	public static void queryByOneImageWithoutSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage, boolean isShowTime) {
 
 		System.out.println("\nModel: query by one image without smc.");
 
@@ -446,7 +446,7 @@ public class CTTools {
 					
 					queryPatchesInThread.addAll(qi.getPatches().subList(startIndex, endIndex + 1));
 					
-					OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread);
+					OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread, isShowTime);
 					
 					t.start();
 					
@@ -579,7 +579,7 @@ public class CTTools {
 		System.out.println("Done.\n");
 	}
 
-	public static void queryByOneImageWithSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage) {
+	public static void queryByOneImageWithSMC(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage, boolean isShowTime) {
 
 		System.out.println("\nModel: query by one image with smc.");
 
@@ -697,7 +697,7 @@ public class CTTools {
 					
 					queryPatchesInThread.addAll(qi.getPatches().subList(startIndex, endIndex + 1));
 					
-					OneImageQueryWithSMCThread t = new OneImageQueryWithSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, threshold, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread);
+					OneImageQueryWithSMCThread t = new OneImageQueryWithSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, threshold, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread, isShowTime);
 					
 					t.start();
 				}
@@ -794,7 +794,7 @@ public class CTTools {
 		}
 	}
 
-	public static void queryByOneImageWithoutSMCBatch(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage) {
+	public static void queryByOneImageWithoutSMCBatch(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage, boolean isShowTime) {
 
 		System.out.println("\nModel: batch query by images without smc.");
 
@@ -879,7 +879,7 @@ public class CTTools {
 						OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1),
 								threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread,
 								DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap,
-								resultInOneThread);
+								resultInOneThread, isShowTime);
 
 						t.start();
 
@@ -908,7 +908,7 @@ public class CTTools {
 		}
 	}
 	
-	public static void queryByOneImageWithSMCBatch(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage) {
+	public static void queryByOneImageWithSMCBatch(BufferedReader br, String keyV, String keyR, short lshL, int step, Integer overlap, int sigma, double k, String queryImagePath, String oriImagePath, String outputPath, int numOfThread, boolean isShowImage, boolean isShowTime) {
 
 		System.out.println("\nModel: query by one image with smc.");
 
@@ -997,7 +997,7 @@ public class CTTools {
 						OneImageQueryWithSMCThread t = new OneImageQueryWithSMCThread("Thread-" + (i + 1),
 								threadCounter, lshL, keyV, keyR, topK, threshold, queryPatchesInThread,
 								DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap,
-								resultInOneThread);
+								resultInOneThread, isShowTime);
 
 						t.start();
 					}

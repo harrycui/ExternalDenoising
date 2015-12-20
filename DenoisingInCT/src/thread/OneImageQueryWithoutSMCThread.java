@@ -11,8 +11,8 @@ import base.LSHVector;
 import base.Patch;
 import base.PatchWithLSH;
 import base.SimilarPatches;
-import index.CashIndex;
 import index.SecureCashIndex;
+import index.SecureCashIndex2;
 
 public class OneImageQueryWithoutSMCThread extends Thread {
 	
@@ -28,13 +28,15 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 	
 	private List<PatchWithLSH> queryPatches;
 	
-	private SecureCashIndex cashIndex;
+	private SecureCashIndex2 cashIndex;
 	
 	private Map<Integer, Patch> rawDBPatchMap;
 	
 	private List<SimilarPatches> patches;
+	
+	private boolean isShowTime;
 
-	public OneImageQueryWithoutSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, List<PatchWithLSH> queryPatches, SecureCashIndex cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches) {
+	public OneImageQueryWithoutSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, List<PatchWithLSH> queryPatches, SecureCashIndex2 cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches, boolean isShowTime) {
 
         super(threadName);
 
@@ -48,6 +50,8 @@ public class OneImageQueryWithoutSMCThread extends Thread {
         
         this.cashIndex = cashIndex;
         this.rawDBPatchMap = new HashMap<Integer, Patch>(rawDBPatchMap);
+        
+        this.isShowTime = isShowTime;
     }
 
 	public void run() {
@@ -60,7 +64,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 
 			LSHVector lshVector = new LSHVector(1, qp.getLshValues(), lshL);
 
-			TreeMap<Integer, List<Integer>> searchResult = cashIndex.searchByOnePatch(lshVector, keyV, keyR);
+			TreeMap<Integer, List<Integer>> searchResult = cashIndex.searchByOnePatch(lshVector, keyV, keyR, isShowTime);
 			
 			List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(topK);
 			

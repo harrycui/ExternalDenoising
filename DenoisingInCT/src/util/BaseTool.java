@@ -1,5 +1,6 @@
 package util;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 /**
@@ -27,22 +28,48 @@ public class BaseTool {
         }
         return des.toString();
     }
+    
+    public static byte[] bigIntegerTo128Bits(BigInteger x) {
+    	
+		ByteBuffer buffer = ByteBuffer.allocate(16);
+		
+		buffer.clear();
+		buffer.put(x.toByteArray(), 0, 16);
+		return buffer.array();
+    }
 
-    private static ByteBuffer buffer = ByteBuffer.allocate(8);
+    //private static ByteBuffer buffer = ByteBuffer.allocate(8);
 
     public static byte[] longToBytes(long x) {
+    	
+    		ByteBuffer buffer = ByteBuffer.allocate(8);
+    		
         buffer.clear();
         buffer.putLong(0, x);
         return buffer.array();
     }
+    
+    
+    
+    public static byte[] longTo128Bits(long x) {
+    	
+		ByteBuffer buffer = ByteBuffer.allocate(16);
+		
+		buffer.clear();
+		buffer.putLong(0, x);
+		return buffer.array();
+    }
 
     public static long bytesToLong(byte[] bytes) {
+    	
+    		ByteBuffer buffer = ByteBuffer.allocate(8);
 
         buffer.clear();
         buffer.put(bytes, 0, 8);
         buffer.flip();//need flip
         return buffer.getLong();
     }
+    
 
     public static long bytesToUnsignedInt(byte[] bytes) {
 
@@ -81,7 +108,7 @@ public class BaseTool {
      * @param data the original data
      * @return long
      */
-    public static long flod160Bytes(byte[] data) {
+    public static long flod160Bits(byte[] data) {
 
         long result = 0;
 

@@ -17,8 +17,8 @@ import base.LSHVector;
 import base.Patch;
 import base.PatchWithLSH;
 import base.QueryImage;
-import index.CashIndex;
 import index.SecureCashIndex;
+import index.SecureCashIndex2;
 import util.CTTools;
 import util.ConfigParser;
 import util.FileUtil;
@@ -37,7 +37,7 @@ public class DenoisingPhaseOneTest {
 
 	public static boolean isRawDataLoaded = false;
 
-	public static SecureCashIndex cashIndex;
+	public static SecureCashIndex2 cashIndex;
 
 	public static List<QueryImage> queryImages;
 
@@ -46,7 +46,7 @@ public class DenoisingPhaseOneTest {
 
 	public static void buildIndex(String dbFilePath, short lshL, int limitNum, String keyV, String keyR) {
 
-		cashIndex = new SecureCashIndex(limitNum * lshL, lshL);
+		cashIndex = new SecureCashIndex2(limitNum * lshL, lshL);
 
 		BufferedReader reader = null;
 
@@ -307,6 +307,8 @@ public class DenoisingPhaseOneTest {
 		String keyR = config.getString("keyR");
 		
 		boolean isShowImage = config.getBool("isShowImage");
+		
+		boolean isShowTime = config.getBool("isShowTime");
 
 		// Step 1: start building secure index
 		buildIndex(dbFilePath, lshL, limitNum, keyV, keyR);
@@ -371,22 +373,22 @@ public class DenoisingPhaseOneTest {
 				loadRawDBPatches(dbFilePath, limitNum, step);
 				break;
 			case Constant.OPERATION_QUERY_TEST_BY_PATCH_WITHOUT_SMC:
-				CTTools.queryByOnePatchWithoutSMC(br, keyV, keyR, lshL, step, sigma);
+				CTTools.queryByOnePatchWithoutSMC(br, keyV, keyR, lshL, step, sigma, isShowTime);
 				break;
 			case Constant.OPERATION_QUERY_TEST_BY_PATCH_WITH_SMC:
-				CTTools.queryByOnePatchWithSMC(br, keyV, keyR, lshL, step, sigma);
+				CTTools.queryByOnePatchWithSMC(br, keyV, keyR, lshL, step, sigma, isShowTime);
 				break;
 			case Constant.OPERATION_QUERY_TEST_BY_IMAGE_WITHOUT_SMC:
-				CTTools.queryByOneImageWithoutSMC(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
+				CTTools.queryByOneImageWithoutSMC(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage, isShowTime);
 				break;
 			case Constant.OPERATION_QUERY_TEST_BY_IMAGE_WITH_SMC:
-				CTTools.queryByOneImageWithSMC(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
+				CTTools.queryByOneImageWithSMC(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage, isShowTime);
 				break;
 			case Constant.OPERATION_BATCH_QUERY_TEST_BY_IMAGE_WITHOUT_SMC:
-				CTTools.queryByOneImageWithoutSMCBatch(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
+				CTTools.queryByOneImageWithoutSMCBatch(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage, isShowTime);
 				break;
 			case Constant.OPERATION_BATCH_QUERY_TEST_BY_IMAGE_WITH_SMC:
-				CTTools.queryByOneImageWithSMCBatch(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage);
+				CTTools.queryByOneImageWithSMCBatch(br, keyV, keyR, lshL, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath, numOfThread, isShowImage, isShowTime);
 				break;
 			}
 		}

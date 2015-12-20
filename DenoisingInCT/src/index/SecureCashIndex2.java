@@ -1,5 +1,6 @@
 package index;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -8,55 +9,51 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import base.CashDigest;
 import base.LSHVector;
 import base.MyTreemapComparator;
+import util.BaseTool;
+import util.MyAES;
 import util.PRF;
 
 /**
  *
  * Created by HarryC on 3/10/15.
+ * Modified by HarryC on 20-Dec-2015
  */
-public class CashIndex {
+public class SecureCashIndex2 {
 
 	private int L;
+	
+	private Random rand;
 
-	public ConcurrentHashMap<Long, Integer> staticIndex;
+	public ConcurrentHashMap<BigInteger, Integer> staticIndex;
 
-	public ConcurrentHashMap<Long, Integer> dynamicIndex;
+	public ConcurrentHashMap<BigInteger, Integer> dynamicIndex;
 
-	public HashSet<Long> revidSet;
+	public HashSet<BigInteger> revidSet;
 
-	private ConcurrentHashMap<Long, Long> maxC; // used to record the maximum c for each
-										// lsh tag;
+	private ConcurrentHashMap<BigInteger, Long> maxC; // used to record the maximum c for each lsh tag;
 
 	public ConcurrentHashMap<Integer, String> idMap;
 
-	//public HashMap<Integer, Integer> tempPatchResult;
 
-	/*public CashIndex(CashIndex ci) {
-
-		this.L = ci.L;
-		this.maxC = new HashMap<Long, Long>(ci.maxC);
-		this.idMap = new HashMap<>(ci.idMap);
-		this.staticIndex = new HashMap<>(ci.staticIndex);
-		this.dynamicIndex = new HashMap<>(ci.dynamicIndex);
-		this.revidSet = new HashSet<>(ci.revidSet);
-	}*/
-
-	public CashIndex(int limit, int L) {
+	public SecureCashIndex2(int limit, int L) {
 
 		this.L = L;
-		this.maxC = new ConcurrentHashMap<Long, Long>();
+		this.rand = new Random(L);
+		
+		this.maxC = new ConcurrentHashMap<BigInteger, Long>();
 
 		this.idMap = new ConcurrentHashMap<Integer, String>(limit);
 
-		this.staticIndex = new ConcurrentHashMap<Long, Integer>(limit);
-		this.dynamicIndex = new ConcurrentHashMap<Long, Integer>(limit);
-		this.revidSet = new HashSet<Long>();
+		this.staticIndex = new ConcurrentHashMap<BigInteger, Integer>(limit);
+		this.dynamicIndex = new ConcurrentHashMap<BigInteger, Integer>(limit);
+		this.revidSet = new HashSet<BigInteger>();
 	}
 
 	public void insert(LSHVector lshVector, String imageId, int fid, String keyV, String keyR) {
@@ -68,9 +65,8 @@ public class CashIndex {
 			long c = 0; // start from 0
 
 			// TODO: double check the connection method
-			long k1 = PRF.HMACSHA1ToUnsignedInt("1xx" + lshValue + "xx" + i, keyV);
-			// String k1 = 1 + "xx" + lshValue + "xx" + i;
-			// long k2 = Long.parseLong(2 + "00" + lshValue + "00" + i);
+			BigInteger k1 = PRF.HMACSHA1ToBigInteger("1xx" + lshValue + "xx" + i, keyV);
+			BigInteger k2 = PRF.HMACSHA1ToBigInteger("2xx" + lshValue + "xx" + i, keyR);
 
 			if (maxC.containsKey(k1)) {
 
@@ -84,14 +80,16 @@ public class CashIndex {
 
 			while (!successInsert) {
 
-				long a = serverPosition(k1, c);
+				BigInteger a = genIndexKey(k1, c);
 
-				// long tag = Long.parseLong(c + "0000" + lshValue + "0" + i);
+				//IndexValue b = encryptIndexValue(k2, (long)fid);
+
+				int b = fid;
 
 				// if does not exist, directly insert
 				if (!staticIndex.containsKey(a)) {
 					// System.out.println(a);
-					staticIndex.put(a, fid);
+					staticIndex.put(a, b);
 
 					idMap.put(fid, imageId);
 
@@ -104,7 +102,7 @@ public class CashIndex {
 		}
 	}
 
-	public boolean dynamicAdd(long key, int value) {
+	public boolean dynamicAdd(BigInteger key, Integer value) {
 
 		if (dynamicIndex.containsKey(key)) {
 
@@ -119,15 +117,15 @@ public class CashIndex {
 		}
 	}
 
-	public void dynamicDel(long revid) {
+	public void dynamicDel(BigInteger revid) {
 
 		revidSet.add(revid);
 	}
 
-	public TreeMap<Integer, List<Integer>> searchByOnePatch(LSHVector lshVector, String keyV, String keyR) {
+	public TreeMap<Integer, List<Integer>> searchByOnePatch(LSHVector lshVector, String keyV, String keyR, boolean isShowTime) {
 
 		// Step 1: generate digests on client
-		long timeFlag1 = System.currentTimeMillis();
+		long timeFlag1 = System.nanoTime();
 
 		List<CashDigest> digestInL = new ArrayList<CashDigest>(L);
 
@@ -136,29 +134,38 @@ public class CashIndex {
 			digestInL.add(new CashDigest(lshVector.getLSHValueByIndex(i), i, keyV, keyR));
 		}
 
-		//System.out.println("Client side digest generate cost: " + (System.currentTimeMillis() - timeFlag1) + "ms.");
-
+		if (isShowTime) {
+			System.out.println("Client-side cost: " + (System.nanoTime() - timeFlag1) + " ns.");
+		}
+		
 		// Step 2: search on server side
-		long timeFlag2 = System.currentTimeMillis();
+		long timeFlag2 = System.nanoTime();
 
 		//// <patch id, number of occurrence>
 		HashMap<Integer, Integer> tempResult = new HashMap<Integer, Integer>();
 
 		for (CashDigest cd : digestInL) {
 
-			long k1 = cd.getK1();
+			BigInteger k1 = cd.getK1();
+			
+			BigInteger k2 = cd.getK2();
 
 			long c = 0; // start from 0
 
 			while (true) {
 
-				long a = serverPosition(k1, c);
+				BigInteger a = genIndexKey(k1, c);
+				
 				// if does not exist, directly insert
 				if (staticIndex.containsKey(a)) {
 
+					//IndexValue indexValue = staticIndex.get(a);
+					
+					//int pid = (int)decryptIndexValue(k2, indexValue);
+					
 					int pid = staticIndex.get(a);
 
-					long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(pid), Long.toString(k1)));
+					long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(pid), k1.toString()));
 
 					if (!revidSet.contains(revid)) {
 
@@ -185,13 +192,17 @@ public class CashIndex {
 
 			while (true) {
 
-				long a = serverPosition(k1, c);
+				BigInteger a = genIndexKey(k1, c);
+				
 				// if does not exist, directly insert
 				if (dynamicIndex.containsKey(a)) {
 
-					int pid = dynamicIndex.get(a);
+					//IndexValue indexValue = staticIndex.get(a);
+					
+					//int pid = (int)decryptIndexValue(k2, indexValue);
+					int pid = staticIndex.get(a);
 
-					long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(pid), Long.toString(k1)));
+					long revid = (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(pid), k1.toString()));
 					if (!revidSet.contains(revid)) {
 
 						synchronized (this) {
@@ -236,8 +247,10 @@ public class CashIndex {
 				result.put(entry.getValue(), patchList);
 			}
 		}
-
-		//System.out.println("Query patch at server cost: " + (System.currentTimeMillis() - timeFlag2) + "ms");
+		
+		if (isShowTime) {
+			System.out.println("Server-side cost: " + (System.nanoTime() - timeFlag2) + " ns.");
+		}
 
 		return result;
 	}
@@ -315,7 +328,7 @@ public class CashIndex {
 		 */
 
 		// è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
-		CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
+		SecureCashIndex2.IntegerValueComparator mc = new IntegerValueComparator();
 		// å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
 		Collections.sort(list, mc);
 
@@ -344,7 +357,7 @@ public class CashIndex {
 		// æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
 		list.addAll(cc.entrySet());
 		// è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
-		CashIndex.StringValueComparator mc = new StringValueComparator();
+		SecureCashIndex2.StringValueComparator mc = new StringValueComparator();
 		// å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
 		Collections.sort(list, mc);
 
@@ -369,7 +382,7 @@ public class CashIndex {
 		// æŠŠmapè½¬åŒ–ä¸ºMap.Entryç„¶å�Žæ”¾åˆ°ç”¨äºŽæŽ’åº�çš„listé‡Œé�¢
 		list.addAll(cc.entrySet());
 		// è°ƒç”¨å†…éƒ¨ç±»çš„æž„é€ å™¨ï¼Œå¦‚æžœè¿™ä¸ªå†…éƒ¨ç±»æ˜¯é�™æ€�å†…éƒ¨ç±»ï¼Œå°±æ¯”è¿™ä¸ªå¥½åŠžç‚¹äº†ã€‚ã€‚
-		CashIndex.IntegerValueComparator mc = new IntegerValueComparator();
+		SecureCashIndex2.IntegerValueComparator mc = new IntegerValueComparator();
 		// å¼€å§‹æŽ’åº�ï¼Œä¼ å…¥æ¯”è¾ƒå™¨å¯¹è±¡
 		Collections.sort(list, mc);
 
@@ -398,8 +411,57 @@ public class CashIndex {
 		}
 	}
 
-	private int serverPosition(long k1Vj, long counter) {
+	private BigInteger genIndexKey(BigInteger k1, long counter) {
 
-		return (int) (PRF.HMACSHA1ToUnsignedInt(String.valueOf(counter), Long.toString(k1Vj)));
+		//System.out.println(k1.toString());
+		return PRF.HMACSHA1ToBigInteger(String.valueOf(counter), k1.toString());
 	}
+
+    private IndexValue encryptIndexValue(BigInteger k2, long id) {
+    		
+    		IndexValue indexValue = null;
+    		
+    		// convert key
+    		byte[] keyBytes = BaseTool.bigIntegerTo128Bits(k2);
+    		
+    		// random gen IV
+    		byte[] iv = BaseTool.longTo128Bits(rand.nextLong());
+    		
+    		// data
+    		byte[] data =  BaseTool.longTo128Bits(id);
+        
+		try {
+			byte[] cipher = MyAES.aesEnc(keyBytes, data, iv);
+			
+			indexValue = new IndexValue(iv, cipher);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+    		return indexValue;
+    }
+    
+    private long decryptIndexValue(BigInteger k2, IndexValue indexValue) {
+    	
+    		long id = -1;
+    		
+    		// convert key
+		byte[] keyBytes = BaseTool.bigIntegerTo128Bits(k2);
+		
+        byte[] cipher = indexValue.getCipher();
+        
+        byte[] iv = indexValue.getIv();
+        
+        try {
+			byte[] data = MyAES.aesDec(keyBytes, cipher, iv);
+			
+			id = BaseTool.bytesToLong(data);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        return id;
+    }
 }

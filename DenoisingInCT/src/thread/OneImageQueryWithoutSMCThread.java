@@ -28,7 +28,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 	
 	private List<PatchWithLSH> queryPatches;
 	
-	private SecureCashIndex2 cashIndex;
+	private SecureCashIndex cashIndex;
 	
 	private Map<Integer, Patch> rawDBPatchMap;
 	
@@ -36,7 +36,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 	
 	private boolean isShowTime;
 
-	public OneImageQueryWithoutSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, List<PatchWithLSH> queryPatches, SecureCashIndex2 cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches, boolean isShowTime) {
+	public OneImageQueryWithoutSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, List<PatchWithLSH> queryPatches, SecureCashIndex cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches, boolean isShowTime) {
 
         super(threadName);
 

@@ -31,13 +31,13 @@ import util.FileUtil;
  */
 public class DenoisingPhaseOneTest {
 	
-	public static final int TOP_K_PATCH = 20;
+	public static final int TOP_K_PATCH = 60;
 
 	public static boolean isQueryImagesLoaded = false;
 
 	public static boolean isRawDataLoaded = false;
 
-	public static SecureCashIndex2 cashIndex;
+	public static SecureCashIndex cashIndex;
 
 	public static List<QueryImage> queryImages;
 
@@ -46,7 +46,7 @@ public class DenoisingPhaseOneTest {
 
 	public static void buildIndex(String dbFilePath, short lshL, int limitNum, String keyV, String keyR) {
 
-		cashIndex = new SecureCashIndex2(limitNum * lshL, lshL);
+		cashIndex = new SecureCashIndex(limitNum * lshL, lshL);
 
 		BufferedReader reader = null;
 

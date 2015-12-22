@@ -21,7 +21,8 @@ import util.MyAES;
 import util.PRF;
 
 /**
- *
+ * This version remove the encryption module for the "value" part. This can save the time for the performance test.
+ * 
  * Created by HarryC on 3/10/15.
  * Modified by HarryC on 20-Dec-2015
  */
@@ -66,7 +67,7 @@ public class SecureCashIndex2 {
 
 			// TODO: double check the connection method
 			BigInteger k1 = PRF.HMACSHA1ToBigInteger("1xx" + lshValue + "xx" + i, keyV);
-			BigInteger k2 = PRF.HMACSHA1ToBigInteger("2xx" + lshValue + "xx" + i, keyR);
+			//BigInteger k2 = PRF.HMACSHA1ToBigInteger("2xx" + lshValue + "xx" + i, keyR);
 
 			if (maxC.containsKey(k1)) {
 
@@ -148,7 +149,7 @@ public class SecureCashIndex2 {
 
 			BigInteger k1 = cd.getK1();
 			
-			BigInteger k2 = cd.getK2();
+			//BigInteger k2 = cd.getK2();
 
 			long c = 0; // start from 0
 
@@ -417,7 +418,8 @@ public class SecureCashIndex2 {
 		return PRF.HMACSHA1ToBigInteger(String.valueOf(counter), k1.toString());
 	}
 
-    private IndexValue encryptIndexValue(BigInteger k2, long id) {
+    @SuppressWarnings("unused")
+	private IndexValue encryptIndexValue(BigInteger k2, long id) {
     		
     		IndexValue indexValue = null;
     		
@@ -442,7 +444,8 @@ public class SecureCashIndex2 {
     		return indexValue;
     }
     
-    private long decryptIndexValue(BigInteger k2, IndexValue indexValue) {
+    @SuppressWarnings("unused")
+	private long decryptIndexValue(BigInteger k2, IndexValue indexValue) {
     	
     		long id = -1;
     		

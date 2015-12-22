@@ -12,7 +12,6 @@ import base.Patch;
 import base.PatchWithLSH;
 import base.SimilarPatches;
 import index.SecureCashIndex;
-import index.SecureCashIndex2;
 import test.DenoisingPhaseOneTest;
 import util.Tools;
 

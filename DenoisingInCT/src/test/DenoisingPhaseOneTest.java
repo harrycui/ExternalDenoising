@@ -18,7 +18,6 @@ import base.Patch;
 import base.PatchWithLSH;
 import base.QueryImage;
 import index.SecureCashIndex;
-import index.SecureCashIndex2;
 import util.CTTools;
 import util.ConfigParser;
 import util.FileUtil;

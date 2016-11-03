@@ -484,7 +484,7 @@ public class CTTools {
 				for (int i = 0; i < patches.size(); ++i) {
 					
 					numOfQueryPatches++;
-					falsePositive = (double) patches.get(i).getPatches().size() / topK;
+					falsePositive = 1.0 - (double) patches.get(i).getPatches().size() / topK;
 					assert(falsePositive <= 1.0 && falsePositive >= 0);
 					falsePositiveSum += falsePositive;
 				}
@@ -903,7 +903,7 @@ public class CTTools {
 					for (int i = 0; i < patches.size(); ++i) {
 						
 						numOfQueryPatches++;
-						falsePositive = (double) patches.get(i).getPatches().size() / topK;
+						falsePositive = 1.0 - (double) patches.get(i).getPatches().size() / topK;
 						assert(falsePositive <= 1.0 && falsePositive >= 0);
 						falsePositiveSum += falsePositive;
 					}

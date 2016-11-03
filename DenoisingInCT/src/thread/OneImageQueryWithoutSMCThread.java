@@ -12,6 +12,8 @@ import base.Patch;
 import base.PatchWithLSH;
 import base.SimilarPatches;
 import index.SecureCashIndex;
+import test.DenoisingPhaseOneTest;
+import util.Tools;
 
 public class OneImageQueryWithoutSMCThread extends Thread {
 	
@@ -35,7 +37,9 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 	
 	private boolean isShowTime;
 
-	public OneImageQueryWithoutSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, List<PatchWithLSH> queryPatches, SecureCashIndex cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches, boolean isShowTime) {
+	private int threshold;
+	
+	public OneImageQueryWithoutSMCThread(String threadName, MyCountDown threadCounter, short lshL, String keyV, String keyR, int topK, int threshold, List<PatchWithLSH> queryPatches, SecureCashIndex cashIndex, Map<Integer, Patch> rawDBPatchMap, List<SimilarPatches> patches, boolean isShowTime) {
 
         super(threadName);
 
@@ -46,6 +50,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
         this.topK = topK;
         this.queryPatches = queryPatches;
         this.patches = patches;
+        this.threshold = threshold;
         
         this.cashIndex = cashIndex;
         this.rawDBPatchMap = new HashMap<Integer, Patch>(rawDBPatchMap);
@@ -72,6 +77,7 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 				Iterator<Map.Entry<Integer, List<Integer>>> entries = searchResult.entrySet().iterator();
 
 				boolean isFullForOnePatch = false;
+				int counter = 0;
 				while (entries.hasNext()) {
 
 				    Map.Entry<Integer, List<Integer>> entry = entries.next();
@@ -82,12 +88,29 @@ public class OneImageQueryWithoutSMCThread extends Thread {
 				    	
 				    	//System.out.println(" " + pid + " - " + entry.getKey());
 				    	
-						similarPatchesForOnePatch.add(rawDBPatchMap.get(pid));
+//						similarPatchesForOnePatch.add(rawDBPatchMap.get(pid));
+//						
+//						if (similarPatchesForOnePatch.size() >= topK) {
+//							isFullForOnePatch = true;
+//							break;
+//						}
+				    	
+				    	/* Update 3-Nov-2016 */
+						counter++;
 						
-						if (similarPatchesForOnePatch.size() >= topK) {
+				    	int dist = Tools.computeEuclideanDist(rawDBPatchMap.get(pid).getPixels(), qp.getPixels());
+						
+						if (dist <= threshold) {
+
+							//System.out.println(" " + pid + " - " + entry.getKey() + " - " + dist);
+							
+							similarPatchesForOnePatch.add(rawDBPatchMap.get(pid));
+						}
+						if (counter >= topK) {
 							isFullForOnePatch = true;
 							break;
 						}
+						/* End Update 3-Nov-2016 */
 					}
 				    
 				    if (isFullForOnePatch) {

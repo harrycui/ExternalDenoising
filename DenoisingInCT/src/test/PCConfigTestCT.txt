@@ -1,7 +1,7 @@
 
 lshL = 10
 
-limitNum = 200000
+limitNum = 2000
 
 rootPath = C:\Users\Helei\Desktop\cloudTest\
 
@@ -31,4 +31,4 @@ k = 0.35
 
 isShowImage = false
 
-isShowTime = true
+isShowTime = false

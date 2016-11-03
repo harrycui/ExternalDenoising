@@ -27,6 +27,11 @@ import util.FileUtil;
  * This version is based on the INFOCOM-2015 testing. I made this for the paper about Image External Denoising.
  *
  * Created by HarryC on 7-Oct-2015.
+ * 
+ * =====================================================================
+ * Update note: 3-Nov-2016
+ * 
+ * Add false-positive calculation in "[7] batch simulate query test by one image (thread num = L) without smc;".
  */
 public class DenoisingPhaseOneTest {
 	

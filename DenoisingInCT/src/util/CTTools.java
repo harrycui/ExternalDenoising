@@ -386,6 +386,8 @@ public class CTTools {
 				
 				System.out.println("\nNow, you can search by input you query image index range from [1, " + numOfImages
 						+ "]: (-1 means return to root menu)");
+				
+				int threshold = (int) (1.126 * 1.126 * step * step * sigma * sigma);
 
 				String queryStr = null;
 				int queryIndex;
@@ -417,6 +419,12 @@ public class CTTools {
 					continue;
 				}
 				
+				/* Update 3-Nov-2016 */
+				double falsePositive = 0.0;
+				double falsePositiveSum = 0.0;
+				int numOfQueryPatches = 0;
+				/* End Update 3-Nov-2016 */
+				
 				long startTime = System.currentTimeMillis();
 				
 				QueryImage qi = DenoisingPhaseOneTest.queryImages.get(queryIndex - 1);
@@ -446,7 +454,7 @@ public class CTTools {
 					
 					queryPatchesInThread.addAll(qi.getPatches().subList(startIndex, endIndex + 1));
 					
-					OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread, isShowTime);
+					OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1), threadCounter, lshL, keyV, keyR, topK, threshold, queryPatchesInThread, DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap, resultInOneThread, isShowTime);
 					
 					t.start();
 					
@@ -466,40 +474,23 @@ public class CTTools {
 				}
 				
 				
-				/*
-				for (int i = 0; i < qi.getPatches().size(); ++i) {
-					
-					PatchWithLSH qp = qi.getPatchByPatchIndex(i);
-
-					LSHVector lshVector = new LSHVector(1, qp.getLshValues(), lshL);
-
-					HashMap<Integer, Integer> searchResult = cashIndex.searchByOnePatch(lshVector, keyV, keyR);
-					
-					List<Patch> similarPatchesForOnePatch = new ArrayList<Patch>(topK);
-					
-					if (searchResult != null && searchResult.size() > 0) {
-						
-						List<Integer> topKId = CashIndex.topKPatches(topK, searchResult);
-
-						for (Integer id : topKId) {
-
-							//System.out.println(" " + id + " - " + searchResult.get(id));
-							similarPatchesForOnePatch.add(rawDBPatchMap.get(id));
-						}
-						
-					}
-					
-					SimilarPatches sp = new SimilarPatches(i, qp, similarPatchesForOnePatch);
-					
-					patches.add(sp);
-
-					System.out.println("Patch No. " + (i + 1) + " is done.");
-				}
-				*/
 				
 				long stopTime1 = System.currentTimeMillis();
 
 				System.out.println("\n\nSearching time is " + (stopTime1 - startTime) + " ms");
+				
+				/* Update 3-Nov-2016 */
+				
+				for (int i = 0; i < patches.size(); ++i) {
+					
+					numOfQueryPatches++;
+					falsePositive = (double) patches.get(i).getPatches().size() / topK;
+					assert(falsePositive <= 1.0 && falsePositive >= 0);
+					falsePositiveSum += falsePositive;
+				}
+				
+				/* End Update 3-Nov-2016 */
+				System.out.println("\nThe average false positive rate is: " + falsePositiveSum/numOfQueryPatches);
 				
 				prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath, oriImagePath, outputPath+"/withoutSMC_", isShowImage);
 				
@@ -843,6 +834,12 @@ public class CTTools {
 			if (!returnToRoot) {
 
 				int numOfImages = DenoisingPhaseOneTest.queryImages.size();
+				
+				/* Update 3-Nov-2016 */
+				double falsePositive = 0.0;
+				double falsePositiveSum = 0.0;
+				int numOfQueryPatches = 0;
+				/* End Update 3-Nov-2016 */
 
 				for (int queryIndex = 1; queryIndex <= numOfImages; ++queryIndex) {
 
@@ -850,6 +847,8 @@ public class CTTools {
 
 					System.out.println("\nWithout SMC: Start processing image: " + qi.getName() + " -->> " + queryIndex + "/" + numOfImages);
 
+					int threshold = (int) (1.126 * 1.126 * step * step * sigma * sigma);
+					
 					List<List<SimilarPatches>> result = new ArrayList<List<SimilarPatches>>(numOfThread);
 
 					MyCountDown threadCounter = new MyCountDown(numOfThread);
@@ -877,7 +876,7 @@ public class CTTools {
 						queryPatchesInThread.addAll(qi.getPatches().subList(startIndex, endIndex + 1));
 
 						OneImageQueryWithoutSMCThread t = new OneImageQueryWithoutSMCThread("Thread-" + (i + 1),
-								threadCounter, lshL, keyV, keyR, topK, queryPatchesInThread,
+								threadCounter, lshL, keyV, keyR, topK, threshold, queryPatchesInThread,
 								DenoisingPhaseOneTest.cashIndex, DenoisingPhaseOneTest.rawDBPatchMap,
 								resultInOneThread, isShowTime);
 
@@ -898,12 +897,25 @@ public class CTTools {
 
 						patches.addAll(result.get(i));
 					}
+					
+					/* Update 3-Nov-2016 */
+					
+					for (int i = 0; i < patches.size(); ++i) {
+						
+						numOfQueryPatches++;
+						falsePositive = (double) patches.get(i).getPatches().size() / topK;
+						assert(falsePositive <= 1.0 && falsePositive >= 0);
+						falsePositiveSum += falsePositive;
+					}
+					
+					/* End Update 3-Nov-2016 */
 
 					prepareToRecoverImage(qi.getName(), patches, topK, step, overlap, sigma, k, queryImagePath,
 							oriImagePath, outputPath+"/withoutSMC_", isShowImage);
 				}
 
 				System.out.println("\nAll done.");
+				System.out.println("\n============\n\nThe total number of query patches is: " + numOfQueryPatches + "\nThe average false positive rate is: " + falsePositiveSum/numOfQueryPatches + "\n\n============");
 			}
 		}
 	}

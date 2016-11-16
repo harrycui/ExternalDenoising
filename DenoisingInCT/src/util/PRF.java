@@ -3,6 +3,8 @@ package util;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -147,15 +149,15 @@ public class PRF {
 
             Charset asciiCs = Charset.forName("US-ASCII");
 
-            Mac sha128_HMAC = Mac.getInstance("HmacSHA1");
+            Mac sha1_HMAC = Mac.getInstance("HmacSHA1");
 
             SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA1");
 
-            sha128_HMAC.init(secretKey);
+            sha1_HMAC.init(secretKey);
 
-            sha128_HMAC.update(msg.getBytes());
+            sha1_HMAC.update(msg.getBytes());
 
-            digest = BaseTool.bytesToUnsignedInt(sha128_HMAC.doFinal());
+            digest = BaseTool.bytesToUnsignedInt(sha1_HMAC.doFinal());
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -163,6 +165,33 @@ public class PRF {
         } catch (InvalidKeyException e) {
             e.printStackTrace();
             return -2;
+        }
+
+        return digest;
+    }
+    
+    public static BigInteger HMACSHA1ToBigInteger(String msg, String key) {
+
+    		BigInteger digest = null;
+
+        try {
+
+            Charset asciiCs = Charset.forName("US-ASCII");
+
+            Mac sha1_HMAC = Mac.getInstance("HmacSHA1");
+
+            SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA1");
+
+            sha1_HMAC.init(secretKey);
+
+            sha1_HMAC.update(msg.getBytes());
+            
+            digest = new BigInteger(sha1_HMAC.doFinal());
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
         }
 
         return digest;
@@ -179,6 +208,35 @@ public class PRF {
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
 
             SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA256");
+
+            sha256_HMAC.init(secretKey);
+
+            sha256_HMAC.update(msg.getBytes());
+
+            digest = sha256_HMAC.doFinal();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return digest;
+    }
+    
+    public static byte[] HMACSHA1(String msg, String key) {
+
+        byte[] digest;
+
+        try {
+
+            Charset asciiCs = Charset.forName("US-ASCII");
+
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA1");
+
+            SecretKey secretKey = new SecretKeySpec(asciiCs.encode(key).array(), "HmacSHA1");
 
             sha256_HMAC.init(secretKey);
 

@@ -1,7 +1,7 @@
 
 lshL = 10
 
-limitNum = 200000
+limitNum = 2000
 
 rootPath = C:\Users\Helei\Desktop\cloudTest\
 
@@ -19,7 +19,7 @@ keyV = harry
 
 keyR = cityu
 
-numOfThread = 2
+numOfThread = 4
 
 step = 9
 
@@ -28,3 +28,7 @@ overlap = 1
 sigma = 10
 
 k = 0.35
+
+isShowImage = false
+
+isShowTime = false

@@ -18,4 +18,6 @@ public class Constant {
     public static final int OPERATION_QUERY_TEST_BY_PATCH_WITH_SMC = 4;
     public static final int OPERATION_QUERY_TEST_BY_IMAGE_WITHOUT_SMC = 5;
     public static final int OPERATION_QUERY_TEST_BY_IMAGE_WITH_SMC = 6;
+    public static final int OPERATION_BATCH_QUERY_TEST_BY_IMAGE_WITHOUT_SMC = 7;
+    public static final int OPERATION_BATCH_QUERY_TEST_BY_IMAGE_WITH_SMC = 8;
 }

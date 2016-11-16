@@ -1,5 +1,7 @@
 package base;
 
+import java.math.BigInteger;
+
 import util.PRF;
 
 /**
@@ -7,22 +9,25 @@ import util.PRF;
  */
 public class CashDigest {
 
-    private long k1;
+    private BigInteger k1;
 
-    private long k2;
+    private BigInteger k2;
 
     public CashDigest(long lshValue, int l, String keyV, String keyR) {
 
-        this.k1 = PRF.HMACSHA1ToUnsignedInt("1xx" + lshValue + "xx" + l, keyV);
+        //this.k1 = PRF.HMACSHA1ToUnsignedInt("1xx" + lshValue + "xx" + l, keyV);
 
-        this.k2 = PRF.HMACSHA1ToUnsignedInt("2xx" + lshValue + "xx" + l, keyR);
+        //this.k2 = PRF.HMACSHA1ToUnsignedInt("2xx" + lshValue + "xx" + l, keyR);
+        
+        this.k1 = PRF.HMACSHA1ToBigInteger("1xx" + lshValue + "xx" + l, keyV);
+		this.k2 = PRF.HMACSHA1ToBigInteger("2xx" + lshValue + "xx" + l, keyR);
     }
 
-    public long getK2() {
+    public BigInteger getK2() {
         return k2;
     }
 
-    public long getK1() {
+    public BigInteger getK1() {
         return k1;
     }
 }

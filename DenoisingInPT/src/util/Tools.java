@@ -96,6 +96,8 @@ public class Tools {
 			int lineNumber = 0;
 
 			String tempString = null;
+			
+			String imageName = inputPath.substring(inputPath.lastIndexOf('/')+1, inputPath.lastIndexOf('.'));
 
 			while ((tempString = reader.readLine()) != null) {
 
@@ -123,7 +125,7 @@ public class Tools {
 				patchList.add(onePatch);
 			}
 
-			imageInPatch = new ImageInPatch("", 1, patchList);
+			imageInPatch = new ImageInPatch(imageName, 1, patchList);
 
 			System.out.println("Read query image patches sucessfully! Number of patches: " + lineNumber);
 

@@ -244,7 +244,7 @@ public class Tools {
 	}
 
 	private static Pixel computeLocation(int pid, int patchWidth, int step, int overlap) {
-
+		
 		int patchX = pid % patchWidth;
 		int patchY = pid / patchWidth;
 

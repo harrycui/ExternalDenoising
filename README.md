@@ -12,6 +12,8 @@ This is a prototype demonstration of the paper: Yifeng Zheng, Helei Cui, Cong Wa
 
 - Paillier: http://www.csee.umbc.edu/~kunliu1/research/Paillier.html
 
+- ObliVM-lang: https://github.com/oblivm/ObliVMLang
+
 <!---
 ### Image dataset:
 

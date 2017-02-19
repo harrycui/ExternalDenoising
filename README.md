@@ -2,7 +2,7 @@
 
 ### Brief introduction
 
-This is a prototype implementation of the paper: Yifeng Zheng, Helei Cui, Cong Wang, and Jiantao Zhou, "Privacy-Preserving Image Denoising from External Cloud Databases," IEEE Transactions on Information Forensics and Security (TIFS), Accepted to appear, 2017.
+This is a prototype implementation of the paper: *Yifeng Zheng, Helei Cui, Cong Wang, and Jiantao Zhou, "Privacy-Preserving Image Denoising from External Cloud Databases," IEEE Transactions on Information Forensics and Security (TIFS), Accepted to appear, 2017*.
 
 ### Used libraries:
 
